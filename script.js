@@ -1,5 +1,494 @@
-// Farm Management System - JavaScript
-// Data management with localStorage
+// ==========================================
+// FUNÇÃO GLOBAL DE LOGOUT
+// ==========================================
+
+window.fazerLogout = async function() {
+    try {
+        const { error } = await _supabase.auth.signOut();
+        if (error) throw error;
+        
+        // Limpa o currentUser e redireciona
+        currentUser = null;
+        window.location.replace('login.html');
+    } catch (error) {
+        alert("Erro ao sair: " + error.message);
+        // Força o redirecionamento mesmo se o Supabase falhar
+        window.location.replace('login.html');
+    }
+};
+
+// ==========================================
+// 1. CONFIGURAÇÃO DO SUPABASE - FAZENDA VERDE
+// ==========================================
+
+const SUPABASE_URL = "https://awwddyhfynaiudoflydg.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2RkeWhmeW5haXVkb2ZseWRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5ODM5MzMsImV4cCI6MjA5NDU1OTkzM30.hiWLY2iqOFnqCpItVggjMDUUHFdzSnVhymkIn4yWyMw";
+
+// Inicializa o cliente do Supabase
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Variável global para armazenar os dados do usuário conectado
+let currentUser = null;
+
+// Verifica se estamos na página de login ou no index.html
+const isLoginPage = window.location.pathname.includes('login.html');
+const isIndexPage = window.location.pathname.includes('index.html') || window.location.pathname.endsWith('/');
+
+// Executa assim que a página carrega completamente
+window.addEventListener('DOMContentLoaded', async () => {
+    // Se estiver na página de login, configura os formulários de autenticação
+    if (isLoginPage) {
+        configurarFormulariosAutenticacao();
+        return;
+    }
+    
+    // Se estiver no index.html, verifica autenticação e carrega o sistema
+    if (isIndexPage) {
+        // 1. Verifica se o usuário já está logado de uma sessão anterior
+        const { data: { session }, error } = await _supabase.auth.getSession();
+        
+        if (session && session.user) {
+            configurarInterfaceLogado(session.user);
+            // Carrega os dados do localStorage
+            updateDashboard();
+            renderGalinhasList();
+            renderVacasList();
+            renderCavalosList();
+            renderOvelhasList();
+            renderLancamentosList();
+            // Set default date for lancamento form
+            const dataLancamento = document.getElementById('dataLancamento');
+            if (dataLancamento) {
+                dataLancamento.value = new Date().toISOString().split('T')[0];
+            }
+            // Set active nav link
+            document.querySelector('[data-section="dashboard"]').classList.add('active');
+        } else {
+            // Redireciona para login se não estiver autenticado
+            window.location.href = 'login.html';
+        }
+
+        // 2. Escuta mudanças no estado da autenticação (Login/Logout/Password Recovery)
+        _supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'PASSWORD_RECOVERY') {
+                // Mostra o formulário de nova senha quando o usuário clica no link de recuperação
+                showSection('nova-senha');
+            } else if (session && session.user) {
+                configurarInterfaceLogado(session.user);
+            } else {
+                configurarInterfaceDeslogado();
+            }
+        });
+
+        // 3. Inicializa os ouvintes dos formulários do sistema
+        configurarFormulariosSistema();
+    }
+});
+
+// ==========================================
+// 2. CONTROLE DE INTERFACE E AUTENTICAÇÃO
+// ==========================================
+
+function configurarInterfaceLogado(user) {
+    currentUser = user;
+    
+    // Exibe o email do usuário na sidebar
+    const userEmailEl = document.getElementById('user-email');
+    if (userEmailEl) userEmailEl.textContent = user.email;
+
+    // Exibe a saudação com o nome do usuário
+    const userGreetingEl = document.getElementById('userGreeting');
+    if (userGreetingEl) {
+        const firstName = user.user_metadata?.first_name || 'Usuário';
+        userGreetingEl.textContent = `Olá, ${firstName}`;
+    }
+
+    // Exibe o avatar do usuário
+    const userAvatarEl = document.getElementById('userAvatar');
+    if (userAvatarEl) {
+        const avatarUrl = user.user_metadata?.avatar_url;
+        const firstName = user.user_metadata?.first_name || 'U';
+        
+        if (avatarUrl) {
+            userAvatarEl.style.backgroundImage = `url(${avatarUrl})`;
+            userAvatarEl.style.backgroundSize = 'cover';
+            userAvatarEl.style.backgroundPosition = 'center';
+            userAvatarEl.textContent = '';
+        } else {
+            userAvatarEl.style.backgroundImage = 'none';
+            userAvatarEl.textContent = firstName.charAt(0).toUpperCase();
+        }
+    }
+
+    // Carrega os dados das tabelas para exibir na tela
+    carregarDadosTodos();
+}
+
+function configurarInterfaceDeslogado() {
+    currentUser = null;
+    
+    // Se estiver no index.html e não estiver logado, redireciona para login.html
+    if (isIndexPage) {
+        window.location.href = 'login.html';
+    }
+}
+
+// ==========================================
+// 3. EVENTOS DE ENVIO (SUBMIT) DOS FORMULÁRIOS DE AUTENTICAÇÃO
+// ==========================================
+
+function configurarFormulariosAutenticacao() {
+    // FORMULÁRIO DE CADASTRO (SIGN UP)
+    const formCadastro = document.getElementById('form-cadastro');
+    if (formCadastro) {
+        formCadastro.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const nome = document.getElementById('cadastro-nome').value;
+            const sobrenome = document.getElementById('cadastro-sobrenome').value;
+            const email = document.getElementById('cadastro-email').value;
+            const senha = document.getElementById('cadastro-senha').value;
+
+            const { data, error } = await _supabase.auth.signUp({
+                email,
+                password: senha,
+                options: {
+                    data: {
+                        first_name: nome,
+                        last_name: sobrenome,
+                        avatar_url: ''
+                    }
+                }
+            });
+            if (error) {
+                showAuthMessage('Erro ao cadastrar: ' + error.message, 'error');
+            } else {
+                showAuthMessage('Cadastro realizado! Verifique seu e-mail para confirmar ou faça login.', 'success');
+                formCadastro.reset();
+            }
+        });
+    }
+
+    // FORMULÁRIO DE LOGIN (SIGN IN)
+    const formLogin = document.getElementById('form-login');
+    if (formLogin) {
+        formLogin.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const senha = document.getElementById('login-senha').value;
+
+            const { data, error } = await _supabase.auth.signInWithPassword({ email, password: senha });
+            if (error) {
+                showAuthMessage('Erro ao entrar: ' + error.message, 'error');
+            } else {
+                // Redireciona para index.html após login bem-sucedido
+                window.location.href = 'index.html';
+            }
+        });
+    }
+
+    // FORMULÁRIO DE RECUPERAÇÃO DE SENHA
+    const formRecuperar = document.getElementById('form-recuperar');
+    if (formRecuperar) {
+        formRecuperar.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('recuperar-email').value;
+            
+            const { error } = await _supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: window.location.origin
+            });
+            
+            if (error) {
+                showAuthMessage('Erro ao enviar email de recuperação: ' + error.message, 'error');
+            } else {
+                showAuthMessage('Email de recuperação enviado! Verifique sua caixa de entrada.', 'success');
+                formRecuperar.reset();
+            }
+        });
+    }
+
+    // FORMULÁRIO DE NOVA SENHA (após recuperação)
+    const formNovaSenha = document.getElementById('form-nova-senha');
+    if (formNovaSenha) {
+        formNovaSenha.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const novaSenha = document.getElementById('nova-senha').value;
+            const confirmarSenha = document.getElementById('confirmar-nova-senha').value;
+            
+            if (novaSenha !== confirmarSenha) {
+                showAuthMessage('As senhas não coincidem!', 'error');
+                return;
+            }
+            
+            const { error } = await _supabase.auth.updateUser({ password: novaSenha });
+            
+            if (error) {
+                showAuthMessage('Erro ao atualizar senha: ' + error.message, 'error');
+            } else {
+                showAuthMessage('Senha atualizada com sucesso! Faça login com sua nova senha.', 'success');
+                formNovaSenha.reset();
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+            }
+        });
+    }
+}
+
+// ==========================================
+// 4. EVENTOS DE ENVIO (SUBMIT) DOS FORMULÁRIOS DO SISTEMA (LOCALSTORAGE)
+// ==========================================
+
+function configurarFormulariosSistema() {
+    // BOTÃO DE MENU HAMBÚRGUER (MOBILE)
+    const menuToggle = document.getElementById('menu-toggle');
+    const sidebar = document.getElementById('sidebar');
+    if (menuToggle && sidebar) {
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('-translate-x-full');
+            sidebar.classList.toggle('translate-x-0');
+        });
+    }
+
+
+    // AVATAR UPLOAD
+    const userAvatar = document.getElementById('userAvatar');
+    const avatarInput = document.getElementById('avatarInput');
+    if (userAvatar && avatarInput) {
+        userAvatar.addEventListener('click', () => {
+            avatarInput.click();
+        });
+
+        avatarInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Convert to Base64 with size limit (max 100kb)
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                const base64String = event.target.result;
+                
+                // Check if file is too large (simple check)
+                if (base64String.length > 100000) {
+                    alert('A imagem é muito grande. Por favor, escolha uma imagem menor (máx 100kb).');
+                    return;
+                }
+
+                // Update user avatar in Supabase
+                const { error } = await _supabase.auth.updateUser({
+                    data: { avatar_url: base64String }
+                });
+
+                if (error) {
+                    alert('Erro ao atualizar avatar: ' + error.message);
+                } else {
+                    // Update avatar display
+                    userAvatar.style.backgroundImage = `url(${base64String})`;
+                    userAvatar.style.backgroundSize = 'cover';
+                    userAvatar.style.backgroundPosition = 'center';
+                    userAvatar.textContent = '';
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // SESSION TIMEOUT (5 minutos de inatividade)
+    let sessionTimeout;
+    const TIMEOUT_DURATION = 5 * 60 * 1000; // 5 minutos em milissegundos
+
+    function resetSessionTimeout() {
+        clearTimeout(sessionTimeout);
+        sessionTimeout = setTimeout(async () => {
+            const { error } = await _supabase.auth.signOut();
+            if (!error) {
+                alert('Sessão expirada por inatividade. Faça login novamente.');
+                window.location.href = 'login.html';
+            }
+        }, TIMEOUT_DURATION);
+    }
+
+    // Inicia o timeout
+    resetSessionTimeout();
+
+    // Reseta o timeout em atividades do usuário
+    const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+    activityEvents.forEach(event => {
+        document.addEventListener(event, resetSessionTimeout);
+    });
+
+    // FORMULÁRIO: GALINHAS
+    const formGalinhas = document.getElementById('formGalinhas');
+    if (formGalinhas) {
+        formGalinhas.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const novoLote = {
+                id: Date.now(),
+                lote: document.getElementById('loteGalinha').value,
+                linhagem: document.getElementById('linhagemGalinha').value,
+                quantidade: document.getElementById('quantidadeGalinha').value
+            };
+            
+            appData.galinhas.push(novoLote);
+            saveData(appData);
+            
+            this.reset();
+            renderGalinhasList();
+            updateDashboard();
+        });
+    }
+
+    // FORMULÁRIO: VACAS E BOIS
+    const formVacas = document.getElementById('formVacas');
+    if (formVacas) {
+        formVacas.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const novaVaca = {
+                id: Date.now(),
+                idBrinco: document.getElementById('idVaca').value,
+                raca: document.getElementById('racaVaca').value,
+                categoria: document.getElementById('categoriaVaca').value,
+                peso: document.getElementById('pesoVaca').value,
+                dataEntrada: document.getElementById('dataEntradaVaca').value
+            };
+            
+            appData.vacas.push(novaVaca);
+            saveData(appData);
+            
+            this.reset();
+            renderVacasList();
+            updateDashboard();
+        });
+    }
+
+    // FORMULÁRIO: CAVALOS
+    const formCavalos = document.getElementById('formCavalos');
+    if (formCavalos) {
+        formCavalos.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const novoCavalo = {
+                id: Date.now(),
+                nome: document.getElementById('nomeCavalo').value,
+                raca: document.getElementById('racaCavalo').value,
+                pai: document.getElementById('paiCavalo').value || '-',
+                mae: document.getElementById('maeCavalo').value || '-',
+                nascimento: document.getElementById('nascimentoCavalo').value,
+                funcao: document.getElementById('funcaoCavalo').value
+            };
+            
+            appData.cavalos.push(novoCavalo);
+            saveData(appData);
+            
+            this.reset();
+            renderCavalosList();
+            updateDashboard();
+        });
+    }
+
+    // FORMULÁRIO: OVELHAS
+    const formOvelhas = document.getElementById('formOvelhas');
+    if (formOvelhas) {
+        formOvelhas.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const novaOvelha = {
+                id: Date.now(),
+                idOvelha: document.getElementById('idOvelha').value,
+                raca: document.getElementById('racaOvelha').value,
+                tipoLa: document.getElementById('tipoLaOvelha').value,
+                idade: document.getElementById('idadeOvelha').value
+            };
+            
+            appData.ovelhas.push(novaOvelha);
+            saveData(appData);
+            
+            this.reset();
+            renderOvelhasList();
+            updateDashboard();
+        });
+    }
+
+    // FORMULÁRIO: LANÇAMENTOS DIÁRIOS
+    const formLancamento = document.getElementById('formLancamento');
+    if (formLancamento) {
+        formLancamento.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const novoLancamento = {
+                id: Date.now(),
+                data: document.getElementById('dataLancamento').value,
+                leite: document.getElementById('leiteLancamento').value,
+                ovos: document.getElementById('ovosLancamento').value,
+                la: document.getElementById('laLancamento').value
+            };
+            
+            appData.lancamentos.push(novoLancamento);
+            saveData(appData);
+            
+            this.reset();
+            // Reset date to today
+            document.getElementById('dataLancamento').value = new Date().toISOString().split('T')[0];
+            renderLancamentosList();
+            updateDashboard();
+        });
+    }
+}
+
+// ==========================================
+// 5. FUNÇÕES AUXILIARES PARA TELA DE LOGIN
+// ==========================================
+
+// Função para alternar entre as seções da tela de login
+function showSection(sectionId) {
+    // Se estiver no index.html, usa a função original de navegação
+    if (isIndexPage) {
+        showSectionIndex(sectionId);
+        return;
+    }
+    
+    // Se estiver no login.html, alterna entre formulários de autenticação
+    document.querySelectorAll('.auth-section').forEach(section => {
+        section.classList.add('hidden');
+    });
+    
+    const targetSection = document.getElementById(sectionId + '-section');
+    if (targetSection) {
+        targetSection.classList.remove('hidden');
+    }
+    
+    hideAuthMessage();
+}
+
+// Função para mostrar mensagens de erro/sucesso na tela de login
+function showAuthMessage(message, type) {
+    const messageEl = document.getElementById('auth-message');
+    if (messageEl) {
+        messageEl.textContent = message;
+        messageEl.classList.remove('hidden');
+        
+        if (type === 'error') {
+            messageEl.classList.remove('bg-green-100', 'text-green-800');
+            messageEl.classList.add('bg-red-100', 'text-red-800');
+        } else if (type === 'success') {
+            messageEl.classList.remove('bg-red-100', 'text-red-800');
+            messageEl.classList.add('bg-green-100', 'text-green-800');
+        }
+    }
+}
+
+// Função para esconder mensagens
+function hideAuthMessage() {
+    const messageEl = document.getElementById('auth-message');
+    if (messageEl) {
+        messageEl.classList.add('hidden');
+    }
+}
+
+// ==========================================
+// 6. FUNÇÕES DO SISTEMA (LOCALSTORAGE)
+// ==========================================
 
 // Initialize data structures
 const defaultData = {
@@ -27,17 +516,14 @@ function saveData(data) {
 // Get current data
 let appData = loadData();
 
-// Navigation
-function showSection(sectionId) {
-    // Hide all sections
+// Navigation for index.html
+function showSectionIndex(sectionId) {
     document.querySelectorAll('.section').forEach(section => {
         section.classList.add('hidden');
     });
     
-    // Show selected section
     document.getElementById(sectionId).classList.remove('hidden');
     
-    // Update active nav link
     document.querySelectorAll('.nav-link').forEach(link => {
         link.classList.remove('active');
         if (link.dataset.section === sectionId) {
@@ -45,7 +531,6 @@ function showSection(sectionId) {
         }
     });
     
-    // Refresh data for the section
     refreshSectionData(sectionId);
 }
 
@@ -75,7 +560,6 @@ function refreshSectionData(sectionId) {
 
 // Dashboard updates
 function updateDashboard() {
-    // Calculate total animals
     const totalGalinhas = appData.galinhas.reduce((sum, lote) => sum + parseInt(lote.quantidade), 0);
     const totalVacas = appData.vacas.length;
     const totalCavalos = appData.cavalos.length;
@@ -88,7 +572,6 @@ function updateDashboard() {
     document.getElementById('totalCavalos').textContent = totalCavalos;
     document.getElementById('totalOvelhas').textContent = totalOvelhas;
     
-    // Get today's production
     const today = new Date().toISOString().split('T')[0];
     const todayLancamentos = appData.lancamentos.filter(l => l.data === today);
     
@@ -100,7 +583,6 @@ function updateDashboard() {
     document.getElementById('totalLeiteHoje').textContent = totalLeiteHoje.toFixed(1) + ' L';
     document.getElementById('totalLaHoje').textContent = totalLaHoje.toFixed(1) + ' kg';
     
-    // Update recent lancamentos
     renderUltimosLancamentos();
 }
 
@@ -124,24 +606,6 @@ function renderUltimosLancamentos() {
 }
 
 // Galinhas functions
-document.getElementById('formGalinhas').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const novoLote = {
-        id: Date.now(),
-        lote: document.getElementById('loteGalinha').value,
-        linhagem: document.getElementById('linhagemGalinha').value,
-        quantidade: document.getElementById('quantidadeGalinha').value
-    };
-    
-    appData.galinhas.push(novoLote);
-    saveData(appData);
-    
-    this.reset();
-    renderGalinhasList();
-    updateDashboard();
-});
-
 function renderGalinhasList() {
     const container = document.getElementById('listaGalinhas');
     
@@ -172,26 +636,6 @@ function deleteGalinha(id) {
 }
 
 // Vacas functions
-document.getElementById('formVacas').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const novaVaca = {
-        id: Date.now(),
-        idBrinco: document.getElementById('idVaca').value,
-        raca: document.getElementById('racaVaca').value,
-        categoria: document.getElementById('categoriaVaca').value,
-        peso: document.getElementById('pesoVaca').value,
-        dataEntrada: document.getElementById('dataEntradaVaca').value
-    };
-    
-    appData.vacas.push(novaVaca);
-    saveData(appData);
-    
-    this.reset();
-    renderVacasList();
-    updateDashboard();
-});
-
 function renderVacasList() {
     const tbody = document.getElementById('tbodyVacas');
     
@@ -223,27 +667,6 @@ function deleteVaca(id) {
 }
 
 // Cavalos functions
-document.getElementById('formCavalos').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const novoCavalo = {
-        id: Date.now(),
-        nome: document.getElementById('nomeCavalo').value,
-        raca: document.getElementById('racaCavalo').value,
-        pai: document.getElementById('paiCavalo').value || '-',
-        mae: document.getElementById('maeCavalo').value || '-',
-        nascimento: document.getElementById('nascimentoCavalo').value,
-        funcao: document.getElementById('funcaoCavalo').value
-    };
-    
-    appData.cavalos.push(novoCavalo);
-    saveData(appData);
-    
-    this.reset();
-    renderCavalosList();
-    updateDashboard();
-});
-
 function renderCavalosList() {
     const tbody = document.getElementById('tbodyCavalos');
     
@@ -275,25 +698,6 @@ function deleteCavalo(id) {
 }
 
 // Ovelhas functions
-document.getElementById('formOvelhas').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const novaOvelha = {
-        id: Date.now(),
-        idOvelha: document.getElementById('idOvelha').value,
-        raca: document.getElementById('racaOvelha').value,
-        tipoLa: document.getElementById('tipoLaOvelha').value,
-        idade: document.getElementById('idadeOvelha').value
-    };
-    
-    appData.ovelhas.push(novaOvelha);
-    saveData(appData);
-    
-    this.reset();
-    renderOvelhasList();
-    updateDashboard();
-});
-
 function renderOvelhasList() {
     const tbody = document.getElementById('tbodyOvelhas');
     
@@ -325,27 +729,6 @@ function deleteOvelha(id) {
 }
 
 // Lancamento functions
-document.getElementById('formLancamento').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const novoLancamento = {
-        id: Date.now(),
-        data: document.getElementById('dataLancamento').value,
-        leite: document.getElementById('leiteLancamento').value,
-        ovos: document.getElementById('ovosLancamento').value,
-        la: document.getElementById('laLancamento').value
-    };
-    
-    appData.lancamentos.push(novoLancamento);
-    saveData(appData);
-    
-    this.reset();
-    // Reset date to today
-    document.getElementById('dataLancamento').value = new Date().toISOString().split('T')[0];
-    renderLancamentosList();
-    updateDashboard();
-});
-
 function renderLancamentosList() {
     const tbody = document.getElementById('tbodyLancamentos');
     
@@ -354,7 +737,6 @@ function renderLancamentosList() {
         return;
     }
     
-    // Sort by date descending
     const sortedLancamentos = [...appData.lancamentos].sort((a, b) => new Date(b.data) - new Date(a.data));
     
     tbody.innerHTML = sortedLancamentos.map(l => `
@@ -384,15 +766,3 @@ function formatDate(dateString) {
     const date = new Date(dateString + 'T00:00:00');
     return date.toLocaleDateString('pt-BR');
 }
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    // Set default date for lancamento form
-    document.getElementById('dataLancamento').value = new Date().toISOString().split('T')[0];
-    
-    // Show dashboard by default
-    showSection('dashboard');
-    
-    // Set active nav link
-    document.querySelector('[data-section="dashboard"]').classList.add('active');
-});
