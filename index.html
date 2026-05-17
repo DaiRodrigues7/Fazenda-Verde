@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestão Agropecuária</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-100">
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-green-800 text-white fixed h-full overflow-y-auto">
+            <div class="p-6 border-b border-green-700">
+                <h1 class="text-2xl font-bold flex items-center gap-2">
+                    <span class="text-3xl">🌾</span>
+                    Fazenda Verde
+                </h1>
+                <p class="text-green-200 text-sm mt-1">Sistema de Gestão</p>
+            </div>
+            <nav class="p-4">
+                <ul class="space-y-2">
+                    <li>
+                        <button onclick="showSection('dashboard')" class="nav-link w-full text-left px-4 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-3" data-section="dashboard">
+                            <span>📊</span>
+                            Dashboard Geral
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="showSection('galinhas')" class="nav-link w-full text-left px-4 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-3" data-section="galinhas">
+                            <span>🐔</span>
+                            Galinhas
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="showSection('vacas')" class="nav-link w-full text-left px-4 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-3" data-section="vacas">
+                            <span>🐄</span>
+                            Vacas e Bois
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="showSection('cavalos')" class="nav-link w-full text-left px-4 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-3" data-section="cavalos">
+                            <span>🐴</span>
+                            Cavalos
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="showSection('ovelhas')" class="nav-link w-full text-left px-4 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-3" data-section="ovelhas">
+                            <span>🐑</span>
+                            Ovelhas
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="showSection('lancamento')" class="nav-link w-full text-left px-4 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-3" data-section="lancamento">
+                            <span>📝</span>
+                            Lançamento Diário
+                        </button>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 ml-64 p-8">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="section">
+                <h2 class="text-3xl font-bold text-green-800 mb-6">Dashboard Geral</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-600">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">Total de Animais</p>
+                                <p id="totalAnimais" class="text-3xl font-bold text-green-800">0</p>
+                            </div>
+                            <span class="text-4xl">🐾</span>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-500">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">Total de Ovos Hoje</p>
+                                <p id="totalOvosHoje" class="text-3xl font-bold text-yellow-600">0</p>
+                            </div>
+                            <span class="text-4xl">🥚</span>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">Total de Leite Hoje</p>
+                                <p id="totalLeiteHoje" class="text-3xl font-bold text-blue-600">0 L</p>
+                            </div>
+                            <span class="text-4xl">🥛</span>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">Total de Lã Hoje</p>
+                                <p id="totalLaHoje" class="text-3xl font-bold text-purple-600">0 kg</p>
+                            </div>
+                            <span class="text-4xl">🧶</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-green-800 mb-4">Resumo por Categoria</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <span class="flex items-center gap-2"><span class="text-2xl">🐔</span> Galinhas</span>
+                                <span id="totalGalinhas" class="font-bold text-green-700">0</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <span class="flex items-center gap-2"><span class="text-2xl">🐄</span> Vacas e Bois</span>
+                                <span id="totalVacas" class="font-bold text-green-700">0</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <span class="flex items-center gap-2"><span class="text-2xl">🐴</span> Cavalos</span>
+                                <span id="totalCavalos" class="font-bold text-green-700">0</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <span class="flex items-center gap-2"><span class="text-2xl">🐑</span> Ovelhas</span>
+                                <span id="totalOvelhas" class="font-bold text-green-700">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-green-800 mb-4">Últimos Lançamentos</h3>
+                        <div id="ultimosLancamentos" class="space-y-2 max-h-64 overflow-y-auto">
+                            <p class="text-gray-500 text-center py-4">Nenhum lançamento registrado</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Galinhas Section -->
+            <section id="galinhas" class="section hidden">
+                <h2 class="text-3xl font-bold text-green-800 mb-6">Gestão de Galinhas</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-green-800 mb-4">Cadastrar Novo Lote</h3>
+                        <form id="formGalinhas" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Lote</label>
+                                <input type="text" id="loteGalinha" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Ex: Lote 01">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Linhagem/Raça</label>
+                                <input type="text" id="linhagemGalinha" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Ex: Rhode Island">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Quantidade de Aves</label>
+                                <input type="number" id="quantidadeGalinha" required min="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Ex: 50">
+                            </div>
+                            <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                                Cadastrar Lote
+                            </button>
+                        </form>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-green-800 mb-4">Lotes Cadastrados</h3>
+                        <div id="listaGalinhas" class="space-y-3 max-h-96 overflow-y-auto">
+                            <p class="text-gray-500 text-center py-4">Nenhum lote cadastrado</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Vacas e Bois Section -->
+            <section id="vacas" class="section hidden">
+                <h2 class="text-3xl font-bold text-green-800 mb-6">Gestão de Vacas e Bois</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-green-800 mb-4">Cadastrar Novo Animal</h3>
+                        <form id="formVacas" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">ID/Brinco</label>
+                                <input type="text" id="idVaca" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Ex: BR-001">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Raça</label>
+                                <select id="racaVaca" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                    <option value="">Selecione...</option>
+                                    <option value="Nelore">Nelore</option>
+                                    <option value="Holandesa">Holandesa</option>
+                                    <option value="Angus">Angus</option>
+                                    <option value="Brahman">Brahman</option>
+                                    <option value="Outra">Outra</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+                                <select id="categoriaVaca" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                    <option value="">Selecione...</option>
+                                    <option value="Boi Gordo">Boi Gordo</option>
+                                    <option value="Vaca de Leite">Vaca de Leite</option>
+                                    <option value="Bezerro">Bezerro</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Peso Atual (kg)</label>
+                                <input type="number" id="pesoVaca" required min="1" step="0.1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Ex: 450">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Data de Entrada</label>
+                                <input type="date" id="dataEntradaVaca" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                            </div>
+                            <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                                Cadastrar Animal
+                            </button>
+                        </form>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-green-800 mb-4">Animais Cadastrados</h3>
+                        <div id="listaVacas" class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="bg-green-50">
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-green-800">ID</th>
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-green-800">Raça</th>
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-green-800">Categoria</th>
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-green-800">Peso</th>
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-green-800">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyVacas">
+                                    <tr>
+                                        <td colspan="5" class="px-4 py-4 text-center text-gray-500">Nenhum animal cadastrado</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Cavalos Section -->
+            <section id="cavalos" class="section hidden">
+                <h2 class="text-3xl font-bold text-green-800 mb-6">Gestão de Cavalos</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-green-800 mb-4">Cadastrar Novo Cavalo</h3>
+                        <form id="formCavalos" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Nome/ID</label>
+                                <input type="text" id="nomeCavalo" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Ex: Trovão">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Raça</label>
+                                <input type="text" id="racaCavalo" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Ex: Quarto de Milha">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Nome do Pai</label>
+                                <input type="text" id="paiCavalo" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Ex: Relâmpago">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Nome da Mãe</label>
+                                <input type="text" id="maeCavalo" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Ex: Estrela">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Data de Nascimento</label>
+                                <input type="date" id="nascimentoCavalo" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Função</label>
+                                <select id="funcaoCavalo" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                    <option value="">Selecione...</option>
+                                    <option value="Trabalho">Trabalho</option>
+                                    <option value="Salto">Salto</option>
+                                    <option value="Reprodução">Reprodução</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                                Cadastrar Cavalo
+                            </button>
+                        </form>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-green-800 mb-4">Cavalos Cadastrados</h3>
+                        <div id="listaCavalos" class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="bg-green-50">
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-green-800">Nome</th>
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-green-800">Raça</th>
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-green-800">Função</th>
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-green-800">Nascimento</th>
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-green-800">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyCavalos">
+                                    <tr>
+                                        <td colspan="5" class="px-4 py-4 text-center text-gray-500">Nenhum cavalo cadastrado</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Ovelhas Section -->
+            <section id="ovelhas" class="section hidden">
+                <h2 class="text-3xl font-bold text-green-800 mb-6">Gestão de Ovelhas</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-green-800 mb-4">Cadastrar Nova Ovelha</h3>
+                        <form id="formOvelhas" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">ID</label>
+                                <input type="text" id="idOvelha" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Ex: OV-001">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Raça</label>
+                                <input type="text" id="racaOvelha" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Ex: Merino">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Lã</label>
+                                <select id="tipoLaOvelha" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                    <option value="">Selecione...</option>
+                                    <option value="Fina">Fina</option>
+                                    <option value="Grossa">Grossa</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Idade (anos)</label>
+                                <input type="number" id="idadeOvelha" required min="0" step="0.5" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Ex: 3">
+                            </div>
+                            <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                                Cadastrar Ovelha
+                            </button>
+                        </form>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-green-800 mb-4">Ovelhas Cadastradas</h3>
+                        <div id="listaOvelhas" class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="bg-green-50">
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-green-800">ID</th>
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-green-800">Raça</th>
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-green-800">Tipo de Lã</th>
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-green-800">Idade</th>
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-green-800">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyOvelhas">
+                                    <tr>
+                                        <td colspan="5" class="px-4 py-4 text-center text-gray-500">Nenhuma ovelha cadastrada</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Lançamento Diário Section -->
+            <section id="lancamento" class="section hidden">
+                <h2 class="text-3xl font-bold text-green-800 mb-6">Lançamento Diário de Produção</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-green-800 mb-4">Registrar Produção</h3>
+                        <form id="formLancamento" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Data</label>
+                                <input type="date" id="dataLancamento" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Litros de Leite do Dia</label>
+                                <input type="number" id="leiteLancamento" required min="0" step="0.1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Ex: 150">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Quantidade de Ovos do Dia</label>
+                                <input type="number" id="ovosLancamento" required min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Ex: 120">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Quilos de Lã</label>
+                                <input type="number" id="laLancamento" required min="0" step="0.1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Ex: 25">
+                            </div>
+                            <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                                Registrar Produção
+                            </button>
+                        </form>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-green-800 mb-4">Histórico de Lançamentos</h3>
+                        <div id="listaLancamentos" class="overflow-x-auto max-h-96 overflow-y-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="bg-green-50">
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-green-800">Data</th>
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-green-800">Leite (L)</th>
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-green-800">Ovos</th>
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-green-800">Lã (kg)</th>
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-green-800">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyLancamentos">
+                                    <tr>
+                                        <td colspan="5" class="px-4 py-4 text-center text-gray-500">Nenhum lançamento registrado</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
