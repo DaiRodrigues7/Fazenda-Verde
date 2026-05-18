@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Sistema de Gestão Agropecuária</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-lg p-8 w-full max-w-md">
+            <!-- Logo and Title -->
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-green-800 flex items-center justify-center gap-2">
+                    <span class="text-4xl">🌾</span>
+                    Fazenda Verde
+                </h1>
+                <p class="text-gray-500 mt-2">Sistema de Gestão Agropecuária</p>
+            </div>
+
+            <!-- Login Form -->
+            <div id="login-section" class="auth-section">
+                <h2 class="text-2xl font-bold text-green-800 mb-6 text-center">Entrar</h2>
+                <form id="form-login" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
+                        <input type="email" id="login-email" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="seu@email.com">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Senha</label>
+                        <input type="password" id="login-senha" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                        Entrar
+                    </button>
+                </form>
+                <div class="mt-4 text-center space-y-2">
+                    <p class="text-gray-600">
+                        Não tem uma conta? 
+                        <button onclick="showSection('cadastro')" class="text-green-600 hover:text-green-700 font-medium">Cadastre-se</button>
+                    </p>
+                    <p>
+                        <button onclick="showSection('recuperar')" class="text-sm text-green-600 hover:text-green-700">Esqueci minha senha</button>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Registration Form -->
+            <div id="cadastro-section" class="auth-section hidden">
+                <h2 class="text-2xl font-bold text-green-800 mb-6 text-center">Criar Conta</h2>
+                <form id="form-cadastro" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nome</label>
+                        <input type="text" id="cadastro-nome" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Seu nome">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Sobrenome</label>
+                        <input type="text" id="cadastro-sobrenome" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Seu sobrenome">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
+                        <input type="email" id="cadastro-email" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="seu@email.com">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Senha</label>
+                        <input type="password" id="cadastro-senha" required minlength="6" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Mínimo 6 caracteres">
+                    </div>
+                    <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                        Cadastrar
+                    </button>
+                </form>
+                <div class="mt-4 text-center">
+                    <p class="text-gray-600">
+                        Já tem uma conta? 
+                        <button onclick="showSection('login')" class="text-green-600 hover:text-green-700 font-medium">Fazer login</button>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Password Recovery Form -->
+            <div id="recuperar-section" class="auth-section hidden">
+                <h2 class="text-2xl font-bold text-green-800 mb-6 text-center">Recuperar Senha</h2>
+                <form id="form-recuperar" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
+                        <input type="email" id="recuperar-email" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="seu@email.com">
+                    </div>
+                    <p class="text-sm text-gray-500">Enviaremos um link de recuperação para o seu e-mail.</p>
+                    <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                        Enviar Link de Recuperação
+                    </button>
+                </form>
+                <div class="mt-4 text-center">
+                    <button onclick="showSection('login')" class="text-green-600 hover:text-green-700 font-medium">Voltar ao Login</button>
+                </div>
+            </div>
+
+            <!-- New Password Form (shown after password recovery) -->
+            <div id="nova-senha-section" class="auth-section hidden">
+                <h2 class="text-2xl font-bold text-green-800 mb-6 text-center">Definir Nova Senha</h2>
+                <form id="form-nova-senha" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nova Senha</label>
+                        <input type="password" id="nova-senha" required minlength="6" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Mínimo 6 caracteres">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Confirmar Nova Senha</label>
+                        <input type="password" id="confirmar-nova-senha" required minlength="6" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Digite novamente">
+                    </div>
+                    <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                        Atualizar Senha
+                    </button>
+                </form>
+            </div>
+
+            <!-- Error/Success Messages -->
+            <div id="auth-message" class="hidden mt-4 p-4 rounded-lg text-center"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
