@@ -1,4 +1,102 @@
 // ==========================================
+// FUNÇÕES GLOBAIS DE FORMULÁRIOS
+// ==========================================
+
+window.salvarGalinha = function() {
+    const novoLote = {
+        id: Date.now(),
+        lote: document.getElementById('loteGalinha').value,
+        linhagem: document.getElementById('linhagemGalinha').value,
+        quantidade: document.getElementById('quantidadeGalinha').value
+    };
+    
+    appData.galinhas.push(novoLote);
+    saveData(appData);
+    
+    document.getElementById('formGalinhas').reset();
+    renderGalinhasList();
+    updateDashboard();
+};
+
+window.salvarVaca = function() {
+    const novaVaca = {
+        id: Date.now(),
+        idBrinco: document.getElementById('idVaca').value,
+        raca: document.getElementById('racaVaca').value,
+        categoria: document.getElementById('categoriaVaca').value,
+        peso: document.getElementById('pesoVaca').value,
+        dataEntrada: document.getElementById('dataEntradaVaca').value
+    };
+    
+    appData.vacas.push(novaVaca);
+    saveData(appData);
+    
+    document.getElementById('formVacas').reset();
+    renderVacasList();
+    updateDashboard();
+};
+
+window.salvarCavalo = function() {
+    const novoCavalo = {
+        id: Date.now(),
+        nome: document.getElementById('nomeCavalo').value,
+        raca: document.getElementById('racaCavalo').value,
+        pai: document.getElementById('paiCavalo').value || '-',
+        mae: document.getElementById('maeCavalo').value || '-',
+        nascimento: document.getElementById('nascimentoCavalo').value,
+        funcao: document.getElementById('funcaoCavalo').value
+    };
+    
+    appData.cavalos.push(novoCavalo);
+    saveData(appData);
+    
+    document.getElementById('formCavalos').reset();
+    renderCavalosList();
+    updateDashboard();
+};
+
+window.salvarOvelha = function() {
+    const novaOvelha = {
+        id: Date.now(),
+        idOvelha: document.getElementById('idOvelha').value,
+        raca: document.getElementById('racaOvelha').value,
+        tipoLa: document.getElementById('tipoLaOvelha').value,
+        idade: document.getElementById('idadeOvelha').value
+    };
+    
+    appData.ovelhas.push(novaOvelha);
+    saveData(appData);
+    
+    document.getElementById('formOvelhas').reset();
+    renderOvelhasList();
+    updateDashboard();
+};
+
+window.salvarLancamento = function() {
+    const dataInput = document.getElementById('dataLancamento');
+    const leiteInput = document.getElementById('leiteLancamento');
+    const ovosInput = document.getElementById('ovosLancamento');
+    const laInput = document.getElementById('laLancamento');
+    
+    const novoLancamento = {
+        id: Date.now(),
+        data: dataInput.value || new Date().toISOString().split('T')[0],
+        leite: leiteInput.value,
+        ovos: ovosInput.value,
+        la: laInput.value
+    };
+    
+    appData.lancamentos.push(novoLancamento);
+    saveData(appData);
+    
+    document.getElementById('formLancamento').reset();
+    // Reset date to today
+    dataInput.value = new Date().toISOString().split('T')[0];
+    renderLancamentosList();
+    updateDashboard();
+};
+
+// ==========================================
 // FUNÇÃO GLOBAL DE LOGOUT
 // ==========================================
 
@@ -316,124 +414,6 @@ function configurarFormulariosSistema() {
         document.addEventListener(event, resetSessionTimeout);
     });
 
-    // FORMULÁRIO: GALINHAS
-    const formGalinhas = document.getElementById('formGalinhas');
-    if (formGalinhas) {
-        formGalinhas.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const novoLote = {
-                id: Date.now(),
-                lote: document.getElementById('loteGalinha').value,
-                linhagem: document.getElementById('linhagemGalinha').value,
-                quantidade: document.getElementById('quantidadeGalinha').value
-            };
-            
-            appData.galinhas.push(novoLote);
-            saveData(appData);
-            
-            this.reset();
-            renderGalinhasList();
-            updateDashboard();
-        });
-    }
-
-    // FORMULÁRIO: VACAS E BOIS
-    const formVacas = document.getElementById('formVacas');
-    if (formVacas) {
-        formVacas.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const novaVaca = {
-                id: Date.now(),
-                idBrinco: document.getElementById('idVaca').value,
-                raca: document.getElementById('racaVaca').value,
-                categoria: document.getElementById('categoriaVaca').value,
-                peso: document.getElementById('pesoVaca').value,
-                dataEntrada: document.getElementById('dataEntradaVaca').value
-            };
-            
-            appData.vacas.push(novaVaca);
-            saveData(appData);
-            
-            this.reset();
-            renderVacasList();
-            updateDashboard();
-        });
-    }
-
-    // FORMULÁRIO: CAVALOS
-    const formCavalos = document.getElementById('formCavalos');
-    if (formCavalos) {
-        formCavalos.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const novoCavalo = {
-                id: Date.now(),
-                nome: document.getElementById('nomeCavalo').value,
-                raca: document.getElementById('racaCavalo').value,
-                pai: document.getElementById('paiCavalo').value || '-',
-                mae: document.getElementById('maeCavalo').value || '-',
-                nascimento: document.getElementById('nascimentoCavalo').value,
-                funcao: document.getElementById('funcaoCavalo').value
-            };
-            
-            appData.cavalos.push(novoCavalo);
-            saveData(appData);
-            
-            this.reset();
-            renderCavalosList();
-            updateDashboard();
-        });
-    }
-
-    // FORMULÁRIO: OVELHAS
-    const formOvelhas = document.getElementById('formOvelhas');
-    if (formOvelhas) {
-        formOvelhas.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const novaOvelha = {
-                id: Date.now(),
-                idOvelha: document.getElementById('idOvelha').value,
-                raca: document.getElementById('racaOvelha').value,
-                tipoLa: document.getElementById('tipoLaOvelha').value,
-                idade: document.getElementById('idadeOvelha').value
-            };
-            
-            appData.ovelhas.push(novaOvelha);
-            saveData(appData);
-            
-            this.reset();
-            renderOvelhasList();
-            updateDashboard();
-        });
-    }
-
-    // FORMULÁRIO: LANÇAMENTOS DIÁRIOS
-    const formLancamento = document.getElementById('formLancamento');
-    if (formLancamento) {
-        formLancamento.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const novoLancamento = {
-                id: Date.now(),
-                data: document.getElementById('dataLancamento').value,
-                leite: document.getElementById('leiteLancamento').value,
-                ovos: document.getElementById('ovosLancamento').value,
-                la: document.getElementById('laLancamento').value
-            };
-            
-            appData.lancamentos.push(novoLancamento);
-            saveData(appData);
-            
-            this.reset();
-            // Reset date to today
-            document.getElementById('dataLancamento').value = new Date().toISOString().split('T')[0];
-            renderLancamentosList();
-            updateDashboard();
-        });
-    }
 }
 
 // ==========================================
@@ -572,16 +552,18 @@ function updateDashboard() {
     document.getElementById('totalCavalos').textContent = totalCavalos;
     document.getElementById('totalOvelhas').textContent = totalOvelhas;
     
-    const today = new Date().toISOString().split('T')[0];
-    const todayLancamentos = appData.lancamentos.filter(l => l.data === today);
+    // Show totals from all lancamentos (not just today)
+    const totalOvosHoje = appData.lancamentos.reduce((sum, l) => sum + parseInt(l.ovos || 0), 0);
+    const totalLeiteHoje = appData.lancamentos.reduce((sum, l) => sum + parseFloat(l.leite || 0), 0);
+    const totalLaHoje = appData.lancamentos.reduce((sum, l) => sum + parseFloat(l.la || 0), 0);
     
-    const totalOvosHoje = todayLancamentos.reduce((sum, l) => sum + parseInt(l.ovos), 0);
-    const totalLeiteHoje = todayLancamentos.reduce((sum, l) => sum + parseFloat(l.leite), 0);
-    const totalLaHoje = todayLancamentos.reduce((sum, l) => sum + parseFloat(l.la), 0);
+    const ovosEl = document.getElementById('totalOvosHoje');
+    const leiteEl = document.getElementById('totalLeiteHoje');
+    const laEl = document.getElementById('totalLaHoje');
     
-    document.getElementById('totalOvosHoje').textContent = totalOvosHoje;
-    document.getElementById('totalLeiteHoje').textContent = totalLeiteHoje.toFixed(1) + ' L';
-    document.getElementById('totalLaHoje').textContent = totalLaHoje.toFixed(1) + ' kg';
+    if (ovosEl) ovosEl.textContent = totalOvosHoje;
+    if (leiteEl) leiteEl.textContent = totalLeiteHoje.toFixed(1) + ' L';
+    if (laEl) laEl.textContent = totalLaHoje.toFixed(1) + ' kg';
     
     renderUltimosLancamentos();
 }
