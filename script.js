@@ -1,99 +1,124 @@
 // ==========================================
-// FUNÇÕES GLOBAIS DE FORMULÁRIOS
+// FUNÇÕES GLOBAIS DE FORMULÁRIOS (SUPABASE)
 // ==========================================
 
-window.salvarGalinha = function() {
-    const novoLote = {
-        id: Date.now(),
-        lote: document.getElementById('loteGalinha').value,
-        linhagem: document.getElementById('linhagemGalinha').value,
-        quantidade: document.getElementById('quantidadeGalinha').value
-    };
-    
-    appData.galinhas.push(novoLote);
-    saveData(appData);
-    
-    document.getElementById('formGalinhas').reset();
-    renderGalinhasList();
-    updateDashboard();
+window.salvarGalinha = async function() {
+    try {
+        const novoLote = {
+            user_id: currentUser.id,
+            lote: document.getElementById('loteGalinha').value,
+            linhagem: document.getElementById('linhagemGalinha').value,
+            quantidade: document.getElementById('quantidadeGalinha').value
+        };
+        
+        const { error } = await _supabase.from('galinhas').insert([novoLote]);
+        if (error) throw error;
+        
+        document.getElementById('formGalinhas').reset();
+        await carregarGalinhas();
+        renderGalinhasList();
+        updateDashboard();
+    } catch (error) {
+        alert('Erro ao salvar galinha: ' + error.message);
+    }
 };
 
-window.salvarVaca = function() {
-    const novaVaca = {
-        id: Date.now(),
-        idBrinco: document.getElementById('idVaca').value,
-        raca: document.getElementById('racaVaca').value,
-        categoria: document.getElementById('categoriaVaca').value,
-        peso: document.getElementById('pesoVaca').value,
-        dataEntrada: document.getElementById('dataEntradaVaca').value
-    };
-    
-    appData.vacas.push(novaVaca);
-    saveData(appData);
-    
-    document.getElementById('formVacas').reset();
-    renderVacasList();
-    updateDashboard();
+window.salvarVaca = async function() {
+    try {
+        const novaVaca = {
+            user_id: currentUser.id,
+            id_brinco: document.getElementById('idVaca').value,
+            raca: document.getElementById('racaVaca').value,
+            categoria: document.getElementById('categoriaVaca').value,
+            peso: document.getElementById('pesoVaca').value,
+            data_entrada: document.getElementById('dataEntradaVaca').value
+        };
+        
+        const { error } = await _supabase.from('vacas').insert([novaVaca]);
+        if (error) throw error;
+        
+        document.getElementById('formVacas').reset();
+        await carregarVacas();
+        renderVacasList();
+        updateDashboard();
+    } catch (error) {
+        alert('Erro ao salvar vaca: ' + error.message);
+    }
 };
 
-window.salvarCavalo = function() {
-    const novoCavalo = {
-        id: Date.now(),
-        nome: document.getElementById('nomeCavalo').value,
-        raca: document.getElementById('racaCavalo').value,
-        pai: document.getElementById('paiCavalo').value || '-',
-        mae: document.getElementById('maeCavalo').value || '-',
-        nascimento: document.getElementById('nascimentoCavalo').value,
-        funcao: document.getElementById('funcaoCavalo').value
-    };
-    
-    appData.cavalos.push(novoCavalo);
-    saveData(appData);
-    
-    document.getElementById('formCavalos').reset();
-    renderCavalosList();
-    updateDashboard();
+window.salvarCavalo = async function() {
+    try {
+        const novoCavalo = {
+            user_id: currentUser.id,
+            nome: document.getElementById('nomeCavalo').value,
+            raca: document.getElementById('racaCavalo').value,
+            pai: document.getElementById('paiCavalo').value || '-',
+            mae: document.getElementById('maeCavalo').value || '-',
+            nascimento: document.getElementById('nascimentoCavalo').value,
+            funcao: document.getElementById('funcaoCavalo').value
+        };
+        
+        const { error } = await _supabase.from('cavalos').insert([novoCavalo]);
+        if (error) throw error;
+        
+        document.getElementById('formCavalos').reset();
+        await carregarCavalos();
+        renderCavalosList();
+        updateDashboard();
+    } catch (error) {
+        alert('Erro ao salvar cavalo: ' + error.message);
+    }
 };
 
-window.salvarOvelha = function() {
-    const novaOvelha = {
-        id: Date.now(),
-        idOvelha: document.getElementById('idOvelha').value,
-        raca: document.getElementById('racaOvelha').value,
-        tipoLa: document.getElementById('tipoLaOvelha').value,
-        idade: document.getElementById('idadeOvelha').value
-    };
-    
-    appData.ovelhas.push(novaOvelha);
-    saveData(appData);
-    
-    document.getElementById('formOvelhas').reset();
-    renderOvelhasList();
-    updateDashboard();
+window.salvarOvelha = async function() {
+    try {
+        const novaOvelha = {
+            user_id: currentUser.id,
+            id_ovelha: document.getElementById('idOvelha').value,
+            raca: document.getElementById('racaOvelha').value,
+            tipo_la: document.getElementById('tipoLaOvelha').value,
+            idade: document.getElementById('idadeOvelha').value
+        };
+        
+        const { error } = await _supabase.from('ovelhas').insert([novaOvelha]);
+        if (error) throw error;
+        
+        document.getElementById('formOvelhas').reset();
+        await carregarOvelhas();
+        renderOvelhasList();
+        updateDashboard();
+    } catch (error) {
+        alert('Erro ao salvar ovelha: ' + error.message);
+    }
 };
 
-window.salvarLancamento = function() {
-    const dataInput = document.getElementById('dataLancamento');
-    const leiteInput = document.getElementById('leiteLancamento');
-    const ovosInput = document.getElementById('ovosLancamento');
-    const laInput = document.getElementById('laLancamento');
-    
-    const novoLancamento = {
-        id: Date.now(),
-        data: dataInput.value || new Date().toISOString().split('T')[0],
-        leite: leiteInput.value,
-        ovos: ovosInput.value,
-        la: laInput.value
-    };
-    
-    appData.lancamentos.push(novoLancamento);
-    saveData(appData);
-    
-    document.getElementById('formLancamento').reset();
-    // Reset date to today
-    dataInput.value = new Date().toISOString().split('T')[0];
-    renderLancamentosList();
-    updateDashboard();
+window.salvarLancamento = async function() {
+    try {
+        const dataInput = document.getElementById('dataLancamento');
+        const leiteInput = document.getElementById('leiteLancamento');
+        const ovosInput = document.getElementById('ovosLancamento');
+        const laInput = document.getElementById('laLancamento');
+        
+        const novoLancamento = {
+            user_id: currentUser.id,
+            data: dataInput.value || new Date().toISOString().split('T')[0],
+            leite: leiteInput.value,
+            ovos: ovosInput.value,
+            la: laInput.value
+        };
+        
+        const { error } = await _supabase.from('lancamentos').insert([novoLancamento]);
+        if (error) throw error;
+        
+        document.getElementById('formLancamento').reset();
+        // Reset date to today
+        dataInput.value = new Date().toISOString().split('T')[0];
+        await carregarLancamentos();
+        renderLancamentosList();
+        updateDashboard();
+    } catch (error) {
+        alert('Erro ao salvar lançamento: ' + error.message);
+    }
 };
 
 // ==========================================
@@ -147,13 +172,6 @@ window.addEventListener('DOMContentLoaded', async () => {
         
         if (session && session.user) {
             configurarInterfaceLogado(session.user);
-            // Carrega os dados do localStorage
-            updateDashboard();
-            renderGalinhasList();
-            renderVacasList();
-            renderCavalosList();
-            renderOvelhasList();
-            renderLancamentosList();
             // Set default date for lancamento form
             const dataLancamento = document.getElementById('dataLancamento');
             if (dataLancamento) {
@@ -187,7 +205,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 // 2. CONTROLE DE INTERFACE E AUTENTICAÇÃO
 // ==========================================
 
-function configurarInterfaceLogado(user) {
+async function configurarInterfaceLogado(user) {
     currentUser = user;
     
     // Exibe o email do usuário na sidebar
@@ -219,7 +237,7 @@ function configurarInterfaceLogado(user) {
     }
 
     // Carrega os dados das tabelas para exibir na tela
-    carregarDadosTodos();
+    await carregarDadosTodos();
 }
 
 function configurarInterfaceDeslogado() {
@@ -467,34 +485,103 @@ function hideAuthMessage() {
 }
 
 // ==========================================
-// 6. FUNÇÕES DO SISTEMA (LOCALSTORAGE)
+// 6. FUNÇÕES DO SISTEMA (SUPABASE)
 // ==========================================
 
-// Initialize data structures
-const defaultData = {
-    galinhas: [],
-    vacas: [],
-    cavalos: [],
-    ovelhas: [],
-    lancamentos: []
-};
+// Variáveis globais para armazenar dados do Supabase
+let galinhasData = [];
+let vacasData = [];
+let cavalosData = [];
+let ovelhasData = [];
+let lancamentosData = [];
 
-// Load data from localStorage or use defaults
-function loadData() {
-    const stored = localStorage.getItem('agropecData');
-    if (stored) {
-        return JSON.parse(stored);
+// Funções para carregar dados do Supabase
+async function carregarGalinhas() {
+    try {
+        const { data, error } = await _supabase
+            .from('galinhas')
+            .select('*')
+            .eq('user_id', currentUser.id);
+        if (error) throw error;
+        galinhasData = data || [];
+    } catch (error) {
+        console.error('Erro ao carregar galinhas:', error);
+        galinhasData = [];
     }
-    return defaultData;
 }
 
-// Save data to localStorage
-function saveData(data) {
-    localStorage.setItem('agropecData', JSON.stringify(data));
+async function carregarVacas() {
+    try {
+        const { data, error } = await _supabase
+            .from('vacas')
+            .select('*')
+            .eq('user_id', currentUser.id);
+        if (error) throw error;
+        vacasData = data || [];
+    } catch (error) {
+        console.error('Erro ao carregar vacas:', error);
+        vacasData = [];
+    }
 }
 
-// Get current data
-let appData = loadData();
+async function carregarCavalos() {
+    try {
+        const { data, error } = await _supabase
+            .from('cavalos')
+            .select('*')
+            .eq('user_id', currentUser.id);
+        if (error) throw error;
+        cavalosData = data || [];
+    } catch (error) {
+        console.error('Erro ao carregar cavalos:', error);
+        cavalosData = [];
+    }
+}
+
+async function carregarOvelhas() {
+    try {
+        const { data, error } = await _supabase
+            .from('ovelhas')
+            .select('*')
+            .eq('user_id', currentUser.id);
+        if (error) throw error;
+        ovelhasData = data || [];
+    } catch (error) {
+        console.error('Erro ao carregar ovelhas:', error);
+        ovelhasData = [];
+    }
+}
+
+async function carregarLancamentos() {
+    try {
+        const { data, error } = await _supabase
+            .from('lancamentos')
+            .select('*')
+            .eq('user_id', currentUser.id);
+        if (error) throw error;
+        lancamentosData = data || [];
+    } catch (error) {
+        console.error('Erro ao carregar lançamentos:', error);
+        lancamentosData = [];
+    }
+}
+
+async function carregarDadosTodos() {
+    await Promise.all([
+        carregarGalinhas(),
+        carregarVacas(),
+        carregarCavalos(),
+        carregarOvelhas(),
+        carregarLancamentos()
+    ]);
+    // Atualiza a interface após carregar todos os dados
+    updateDashboard();
+    renderGalinhasList();
+    renderVacasList();
+    renderCavalosList();
+    renderOvelhasList();
+    renderLancamentosList();
+}
 
 // Navigation for index.html
 function showSectionIndex(sectionId) {
@@ -540,10 +627,10 @@ function refreshSectionData(sectionId) {
 
 // Dashboard updates
 function updateDashboard() {
-    const totalGalinhas = appData.galinhas.reduce((sum, lote) => sum + parseInt(lote.quantidade), 0);
-    const totalVacas = appData.vacas.length;
-    const totalCavalos = appData.cavalos.length;
-    const totalOvelhas = appData.ovelhas.length;
+    const totalGalinhas = galinhasData.reduce((sum, lote) => sum + parseInt(lote.quantidade || 0), 0);
+    const totalVacas = vacasData.length;
+    const totalCavalos = cavalosData.length;
+    const totalOvelhas = ovelhasData.length;
     const totalAnimais = totalGalinhas + totalVacas + totalCavalos + totalOvelhas;
     
     document.getElementById('totalAnimais').textContent = totalAnimais;
@@ -553,9 +640,9 @@ function updateDashboard() {
     document.getElementById('totalOvelhas').textContent = totalOvelhas;
     
     // Show totals from all lancamentos (not just today)
-    const totalOvosHoje = appData.lancamentos.reduce((sum, l) => sum + parseInt(l.ovos || 0), 0);
-    const totalLeiteHoje = appData.lancamentos.reduce((sum, l) => sum + parseFloat(l.leite || 0), 0);
-    const totalLaHoje = appData.lancamentos.reduce((sum, l) => sum + parseFloat(l.la || 0), 0);
+    const totalOvosHoje = lancamentosData.reduce((sum, l) => sum + parseInt(l.ovos || 0), 0);
+    const totalLeiteHoje = lancamentosData.reduce((sum, l) => sum + parseFloat(l.leite || 0), 0);
+    const totalLaHoje = lancamentosData.reduce((sum, l) => sum + parseFloat(l.la || 0), 0);
     
     const ovosEl = document.getElementById('totalOvosHoje');
     const leiteEl = document.getElementById('totalLeiteHoje');
@@ -570,7 +657,7 @@ function updateDashboard() {
 
 function renderUltimosLancamentos() {
     const container = document.getElementById('ultimosLancamentos');
-    const recentLancamentos = [...appData.lancamentos].sort((a, b) => new Date(b.data) - new Date(a.data)).slice(0, 5);
+    const recentLancamentos = [...lancamentosData].sort((a, b) => new Date(b.data) - new Date(a.data)).slice(0, 5);
     
     if (recentLancamentos.length === 0) {
         container.innerHTML = '<p class="text-gray-500 text-center py-4">Nenhum lançamento registrado</p>';
@@ -591,12 +678,12 @@ function renderUltimosLancamentos() {
 function renderGalinhasList() {
     const container = document.getElementById('listaGalinhas');
     
-    if (appData.galinhas.length === 0) {
+    if (galinhasData.length === 0) {
         container.innerHTML = '<p class="text-gray-500 text-center py-4">Nenhum lote cadastrado</p>';
         return;
     }
     
-    container.innerHTML = appData.galinhas.map(l => `
+    container.innerHTML = galinhasData.map(l => `
         <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
             <div>
                 <p class="font-bold text-green-800">${l.lote}</p>
@@ -608,12 +695,17 @@ function renderGalinhasList() {
     `).join('');
 }
 
-function deleteGalinha(id) {
+async function deleteGalinha(id) {
     if (confirm('Tem certeza que deseja excluir este lote?')) {
-        appData.galinhas = appData.galinhas.filter(l => l.id !== id);
-        saveData(appData);
-        renderGalinhasList();
-        updateDashboard();
+        try {
+            const { error } = await _supabase.from('galinhas').delete().eq('id', id);
+            if (error) throw error;
+            await carregarGalinhas();
+            renderGalinhasList();
+            updateDashboard();
+        } catch (error) {
+            alert('Erro ao excluir galinha: ' + error.message);
+        }
     }
 }
 
@@ -621,14 +713,14 @@ function deleteGalinha(id) {
 function renderVacasList() {
     const tbody = document.getElementById('tbodyVacas');
     
-    if (appData.vacas.length === 0) {
+    if (vacasData.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-4 text-center text-gray-500">Nenhum animal cadastrado</td></tr>';
         return;
     }
     
-    tbody.innerHTML = appData.vacas.map(v => `
+    tbody.innerHTML = vacasData.map(v => `
         <tr class="border-b border-gray-100">
-            <td class="px-4 py-3">${v.idBrinco}</td>
+            <td class="px-4 py-3">${v.id_brinco}</td>
             <td class="px-4 py-3">${v.raca}</td>
             <td class="px-4 py-3"><span class="badge badge-green">${v.categoria}</span></td>
             <td class="px-4 py-3">${v.peso} kg</td>
@@ -639,12 +731,17 @@ function renderVacasList() {
     `).join('');
 }
 
-function deleteVaca(id) {
+async function deleteVaca(id) {
     if (confirm('Tem certeza que deseja excluir este animal?')) {
-        appData.vacas = appData.vacas.filter(v => v.id !== id);
-        saveData(appData);
-        renderVacasList();
-        updateDashboard();
+        try {
+            const { error } = await _supabase.from('vacas').delete().eq('id', id);
+            if (error) throw error;
+            await carregarVacas();
+            renderVacasList();
+            updateDashboard();
+        } catch (error) {
+            alert('Erro ao excluir vaca: ' + error.message);
+        }
     }
 }
 
@@ -652,12 +749,12 @@ function deleteVaca(id) {
 function renderCavalosList() {
     const tbody = document.getElementById('tbodyCavalos');
     
-    if (appData.cavalos.length === 0) {
+    if (cavalosData.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-4 text-center text-gray-500">Nenhum cavalo cadastrado</td></tr>';
         return;
     }
     
-    tbody.innerHTML = appData.cavalos.map(c => `
+    tbody.innerHTML = cavalosData.map(c => `
         <tr class="border-b border-gray-100">
             <td class="px-4 py-3 font-medium">${c.nome}</td>
             <td class="px-4 py-3">${c.raca}</td>
@@ -670,12 +767,17 @@ function renderCavalosList() {
     `).join('');
 }
 
-function deleteCavalo(id) {
+async function deleteCavalo(id) {
     if (confirm('Tem certeza que deseja excluir este cavalo?')) {
-        appData.cavalos = appData.cavalos.filter(c => c.id !== id);
-        saveData(appData);
-        renderCavalosList();
-        updateDashboard();
+        try {
+            const { error } = await _supabase.from('cavalos').delete().eq('id', id);
+            if (error) throw error;
+            await carregarCavalos();
+            renderCavalosList();
+            updateDashboard();
+        } catch (error) {
+            alert('Erro ao excluir cavalo: ' + error.message);
+        }
     }
 }
 
@@ -683,16 +785,16 @@ function deleteCavalo(id) {
 function renderOvelhasList() {
     const tbody = document.getElementById('tbodyOvelhas');
     
-    if (appData.ovelhas.length === 0) {
+    if (ovelhasData.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-4 text-center text-gray-500">Nenhuma ovelha cadastrada</td></tr>';
         return;
     }
     
-    tbody.innerHTML = appData.ovelhas.map(o => `
+    tbody.innerHTML = ovelhasData.map(o => `
         <tr class="border-b border-gray-100">
-            <td class="px-4 py-3">${o.idOvelha}</td>
+            <td class="px-4 py-3">${o.id_ovelha}</td>
             <td class="px-4 py-3">${o.raca}</td>
-            <td class="px-4 py-3"><span class="badge badge-purple">${o.tipoLa}</span></td>
+            <td class="px-4 py-3"><span class="badge badge-purple">${o.tipo_la}</span></td>
             <td class="px-4 py-3">${o.idade} anos</td>
             <td class="px-4 py-3">
                 <button onclick="deleteOvelha(${o.id})" class="btn-delete">Excluir</button>
@@ -701,12 +803,17 @@ function renderOvelhasList() {
     `).join('');
 }
 
-function deleteOvelha(id) {
+async function deleteOvelha(id) {
     if (confirm('Tem certeza que deseja excluir esta ovelha?')) {
-        appData.ovelhas = appData.ovelhas.filter(o => o.id !== id);
-        saveData(appData);
-        renderOvelhasList();
-        updateDashboard();
+        try {
+            const { error } = await _supabase.from('ovelhas').delete().eq('id', id);
+            if (error) throw error;
+            await carregarOvelhas();
+            renderOvelhasList();
+            updateDashboard();
+        } catch (error) {
+            alert('Erro ao excluir ovelha: ' + error.message);
+        }
     }
 }
 
@@ -714,12 +821,12 @@ function deleteOvelha(id) {
 function renderLancamentosList() {
     const tbody = document.getElementById('tbodyLancamentos');
     
-    if (appData.lancamentos.length === 0) {
+    if (lancamentosData.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-4 text-center text-gray-500">Nenhum lançamento registrado</td></tr>';
         return;
     }
     
-    const sortedLancamentos = [...appData.lancamentos].sort((a, b) => new Date(b.data) - new Date(a.data));
+    const sortedLancamentos = [...lancamentosData].sort((a, b) => new Date(b.data) - new Date(a.data));
     
     tbody.innerHTML = sortedLancamentos.map(l => `
         <tr class="border-b border-gray-100">
@@ -734,12 +841,17 @@ function renderLancamentosList() {
     `).join('');
 }
 
-function deleteLancamento(id) {
+async function deleteLancamento(id) {
     if (confirm('Tem certeza que deseja excluir este lançamento?')) {
-        appData.lancamentos = appData.lancamentos.filter(l => l.id !== id);
-        saveData(appData);
-        renderLancamentosList();
-        updateDashboard();
+        try {
+            const { error } = await _supabase.from('lancamentos').delete().eq('id', id);
+            if (error) throw error;
+            await carregarLancamentos();
+            renderLancamentosList();
+            updateDashboard();
+        } catch (error) {
+            alert('Erro ao excluir lançamento: ' + error.message);
+        }
     }
 }
 
