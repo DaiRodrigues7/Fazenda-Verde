@@ -358,11 +358,16 @@ function configurarFormulariosSistema() {
     // BOTÃO DE MENU HAMBÚRGUER (MOBILE)
     const menuToggle = document.getElementById('menu-toggle');
     const sidebar = document.getElementById('sidebar');
+    
+    function toggleSidebar(e) {
+        e.preventDefault(); // Evita fantasmas de clique no iOS
+        sidebar.classList.toggle('-translate-x-full');
+        sidebar.classList.toggle('translate-x-0');
+    }
+    
     if (menuToggle && sidebar) {
-        menuToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('-translate-x-full');
-            sidebar.classList.toggle('translate-x-0');
-        });
+        menuToggle.addEventListener('click', toggleSidebar);
+        menuToggle.addEventListener('touchstart', toggleSidebar, { passive: false });
     }
 
     // AVATAR UPLOAD
