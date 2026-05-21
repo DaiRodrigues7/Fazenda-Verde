@@ -27,7 +27,7 @@ window.salvarVaca = async function() {
     try {
         const novaVaca = {
             user_id: currentUser.id,
-            id_brinco: document.getElementById('idVaca').value,
+            brinco: document.getElementById('idVaca').value,
             raca: document.getElementById('racaVaca').value,
             categoria: document.getElementById('categoriaVaca').value,
             peso: document.getElementById('pesoVaca').value,
@@ -74,7 +74,7 @@ window.salvarOvelha = async function() {
     try {
         const novaOvelha = {
             user_id: currentUser.id,
-            id_ovelha: document.getElementById('idOvelha').value,
+            brinco: document.getElementById('idOvelha').value,
             raca: document.getElementById('racaOvelha').value,
             tipo_la: document.getElementById('tipoLaOvelha').value,
             idade: document.getElementById('idadeOvelha').value
@@ -505,7 +505,6 @@ async function carregarGalinhas() {
         if (error) throw error;
         galinhasData = data || [];
     } catch (error) {
-        console.error('Erro ao carregar galinhas:', error);
         galinhasData = [];
     }
 }
@@ -519,7 +518,6 @@ async function carregarVacas() {
         if (error) throw error;
         vacasData = data || [];
     } catch (error) {
-        console.error('Erro ao carregar vacas:', error);
         vacasData = [];
     }
 }
@@ -533,7 +531,6 @@ async function carregarCavalos() {
         if (error) throw error;
         cavalosData = data || [];
     } catch (error) {
-        console.error('Erro ao carregar cavalos:', error);
         cavalosData = [];
     }
 }
@@ -547,7 +544,6 @@ async function carregarOvelhas() {
         if (error) throw error;
         ovelhasData = data || [];
     } catch (error) {
-        console.error('Erro ao carregar ovelhas:', error);
         ovelhasData = [];
     }
 }
@@ -561,7 +557,6 @@ async function carregarLancamentos() {
         if (error) throw error;
         lancamentosData = data || [];
     } catch (error) {
-        console.error('Erro ao carregar lançamentos:', error);
         lancamentosData = [];
     }
 }
@@ -695,7 +690,7 @@ function renderGalinhasList() {
     `).join('');
 }
 
-async function deleteGalinha(id) {
+window.deleteGalinha = async function(id) {
     if (confirm('Tem certeza que deseja excluir este lote?')) {
         try {
             const { error } = await _supabase.from('galinhas').delete().eq('id', id);
@@ -720,7 +715,7 @@ function renderVacasList() {
     
     tbody.innerHTML = vacasData.map(v => `
         <tr class="border-b border-gray-100">
-            <td class="px-4 py-3">${v.id_brinco}</td>
+            <td class="px-4 py-3">${v.brinco}</td>
             <td class="px-4 py-3">${v.raca}</td>
             <td class="px-4 py-3"><span class="badge badge-green">${v.categoria}</span></td>
             <td class="px-4 py-3">${v.peso} kg</td>
@@ -731,7 +726,7 @@ function renderVacasList() {
     `).join('');
 }
 
-async function deleteVaca(id) {
+window.deleteVaca = async function(id) {
     if (confirm('Tem certeza que deseja excluir este animal?')) {
         try {
             const { error } = await _supabase.from('vacas').delete().eq('id', id);
@@ -767,7 +762,7 @@ function renderCavalosList() {
     `).join('');
 }
 
-async function deleteCavalo(id) {
+window.deleteCavalo = async function(id) {
     if (confirm('Tem certeza que deseja excluir este cavalo?')) {
         try {
             const { error } = await _supabase.from('cavalos').delete().eq('id', id);
@@ -792,7 +787,7 @@ function renderOvelhasList() {
     
     tbody.innerHTML = ovelhasData.map(o => `
         <tr class="border-b border-gray-100">
-            <td class="px-4 py-3">${o.id_ovelha}</td>
+            <td class="px-4 py-3">${o.brinco}</td>
             <td class="px-4 py-3">${o.raca}</td>
             <td class="px-4 py-3"><span class="badge badge-purple">${o.tipo_la}</span></td>
             <td class="px-4 py-3">${o.idade} anos</td>
@@ -803,7 +798,7 @@ function renderOvelhasList() {
     `).join('');
 }
 
-async function deleteOvelha(id) {
+window.deleteOvelha = async function(id) {
     if (confirm('Tem certeza que deseja excluir esta ovelha?')) {
         try {
             const { error } = await _supabase.from('ovelhas').delete().eq('id', id);
@@ -841,7 +836,7 @@ function renderLancamentosList() {
     `).join('');
 }
 
-async function deleteLancamento(id) {
+window.deleteLancamento = async function(id) {
     if (confirm('Tem certeza que deseja excluir este lançamento?')) {
         try {
             const { error } = await _supabase.from('lancamentos').delete().eq('id', id);
