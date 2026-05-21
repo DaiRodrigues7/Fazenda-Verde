@@ -2,7 +2,7 @@
 
 Um sistema web completo, responsivo e intuitivo desenvolvido para facilitar a gestão de propriedades rurais. O sistema permite o controle detalhado de rebanhos e o registro da produção diária, tudo protegido de forma individual para cada usuário.
 
-🔴 **Acesse o sistema funcionando aqui:** [https://fazenda-verde.vercel.app](https://fazenda-verde.vercel.app)
+🔴 **Acesse o sistema funcionando aqui:** [https://fazenda-verde.vercel.app](https://fazenda-verde.vercel.app/login.html)
 
 ---
 
