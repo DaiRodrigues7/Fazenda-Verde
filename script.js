@@ -683,7 +683,7 @@ function renderGalinhasList() {
                 <p class="text-sm text-gray-600">Raça: ${l.linhagem}</p>
                 <p class="text-sm text-gray-600">Quantidade: ${l.quantidade} aves</p>
             </div>
-            <button onclick="deleteGalinha(${l.id})" class="btn-delete">Excluir</button>
+            <button onclick="deleteGalinha('${l.id}')" class="btn-delete">Excluir</button>
         </div>
     `).join('');
 }
@@ -718,7 +718,7 @@ function renderVacasList() {
             <td class="px-4 py-3"><span class="badge badge-green">${v.categoria}</span></td>
             <td class="px-4 py-3">${v.peso} kg</td>
             <td class="px-4 py-3">
-                <button onclick="deleteVaca(${v.id})" class="btn-delete">Excluir</button>
+                <button onclick="deleteVaca('${v.id}')" class="btn-delete">Excluir</button>
             </td>
         </tr>
     `).join('');
@@ -754,7 +754,7 @@ function renderCavalosList() {
             <td class="px-4 py-3"><span class="badge badge-blue">${c.funcao}</span></td>
             <td class="px-4 py-3">${formatDate(c.nascimento)}</td>
             <td class="px-4 py-3">
-                <button onclick="deleteCavalo(${c.id})" class="btn-delete">Excluir</button>
+                <button onclick="deleteCavalo('${c.id}')" class="btn-delete">Excluir</button>
             </td>
         </tr>
     `).join('');
@@ -790,7 +790,7 @@ function renderOvelhasList() {
             <td class="px-4 py-3"><span class="badge badge-purple">${o.tipo_la}</span></td>
             <td class="px-4 py-3">${o.idade} anos</td>
             <td class="px-4 py-3">
-                <button onclick="deleteOvelha(${o.id})" class="btn-delete">Excluir</button>
+                <button onclick="deleteOvelha('${o.id}')" class="btn-delete">Excluir</button>
             </td>
         </tr>
     `).join('');
@@ -828,7 +828,7 @@ function renderLancamentosList() {
             <td class="px-4 py-3">${l.ovos}</td>
             <td class="px-4 py-3">${l.la} kg</td>
             <td class="px-4 py-3">
-                <button onclick="deleteLancamento(${l.id})" class="btn-delete">Excluir</button>
+                <button onclick="deleteLancamento('${l.id}')" class="btn-delete">Excluir</button>
             </td>
         </tr>
     `).join('');
