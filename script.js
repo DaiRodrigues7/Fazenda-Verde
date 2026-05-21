@@ -351,7 +351,7 @@ function configurarFormulariosAutenticacao() {
 }
 
 // ==========================================
-// 4. EVENTOS DE ENVIO (SUBMIT) DOS FORMULÁRIOS DO SISTEMA (LOCALSTORAGE)
+// 4. EVENTOS DE ENVIO (SUBMIT) DOS FORMULÁRIOS DO SISTEMA (SUPABASE)
 // ==========================================
 
 function configurarFormulariosSistema() {
@@ -364,7 +364,6 @@ function configurarFormulariosSistema() {
             sidebar.classList.toggle('translate-x-0');
         });
     }
-
 
     // AVATAR UPLOAD
     const userAvatar = document.getElementById('userAvatar');
@@ -431,7 +430,6 @@ function configurarFormulariosSistema() {
     activityEvents.forEach(event => {
         document.addEventListener(event, resetSessionTimeout);
     });
-
 }
 
 // ==========================================
