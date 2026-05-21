@@ -361,14 +361,35 @@ function configurarFormulariosSistema() {
     
     function toggleSidebar(e) {
         e.preventDefault(); // Evita fantasmas de clique no iOS
-        sidebar.classList.toggle('-translate-x-full');
-        sidebar.classList.toggle('translate-x-0');
+        if (window.innerWidth < 768) {
+            // Em mobile, alterna entre escondido e visível
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                sidebar.classList.add('translate-x-0');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                sidebar.classList.remove('translate-x-0');
+            }
+        }
     }
     
     if (menuToggle && sidebar) {
         menuToggle.addEventListener('click', toggleSidebar);
         menuToggle.addEventListener('touchstart', toggleSidebar, { passive: false });
     }
+    
+    // Fecha o menu ao clicar fora dele em mobile
+    document.addEventListener('click', (e) => {
+        if (window.innerWidth < 768 && 
+            sidebar && 
+            !sidebar.contains(e.target) && 
+            menuToggle && 
+            !menuToggle.contains(e.target) &&
+            !sidebar.classList.contains('-translate-x-full')) {
+            sidebar.classList.add('-translate-x-full');
+            sidebar.classList.remove('translate-x-0');
+        }
+    });
 
     // AVATAR UPLOAD
     const userAvatar = document.getElementById('userAvatar');
