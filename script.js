@@ -691,7 +691,7 @@ function renderGalinhasList() {
 window.deleteGalinha = async function(id) {
     if (confirm('Tem certeza que deseja excluir este lote?')) {
         try {
-            const { error } = await _supabase.from('galinhas').delete().eq('id', id);
+            const { error } = await _supabase.from('galinhas').delete().eq('id', id).eq('user_id', currentUser.id);
             if (error) throw error;
             await carregarGalinhas();
             renderGalinhasList();
@@ -727,7 +727,7 @@ function renderVacasList() {
 window.deleteVaca = async function(id) {
     if (confirm('Tem certeza que deseja excluir este animal?')) {
         try {
-            const { error } = await _supabase.from('vacas').delete().eq('id', id);
+            const { error } = await _supabase.from('vacas').delete().eq('id', id).eq('user_id', currentUser.id);
             if (error) throw error;
             await carregarVacas();
             renderVacasList();
@@ -763,7 +763,7 @@ function renderCavalosList() {
 window.deleteCavalo = async function(id) {
     if (confirm('Tem certeza que deseja excluir este cavalo?')) {
         try {
-            const { error } = await _supabase.from('cavalos').delete().eq('id', id);
+            const { error } = await _supabase.from('cavalos').delete().eq('id', id).eq('user_id', currentUser.id);
             if (error) throw error;
             await carregarCavalos();
             renderCavalosList();
@@ -799,7 +799,7 @@ function renderOvelhasList() {
 window.deleteOvelha = async function(id) {
     if (confirm('Tem certeza que deseja excluir esta ovelha?')) {
         try {
-            const { error } = await _supabase.from('ovelhas').delete().eq('id', id);
+            const { error } = await _supabase.from('ovelhas').delete().eq('id', id).eq('user_id', currentUser.id);
             if (error) throw error;
             await carregarOvelhas();
             renderOvelhasList();
@@ -837,7 +837,7 @@ function renderLancamentosList() {
 window.deleteLancamento = async function(id) {
     if (confirm('Tem certeza que deseja excluir este lançamento?')) {
         try {
-            const { error } = await _supabase.from('lancamentos').delete().eq('id', id);
+            const { error } = await _supabase.from('lancamentos').delete().eq('id', id).eq('user_id', currentUser.id);
             if (error) throw error;
             await carregarLancamentos();
             renderLancamentosList();
