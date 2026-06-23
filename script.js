@@ -25,7 +25,9 @@ window.salvarGalinha = async function() {
 
 window.salvarVaca = async function() {
     try {
-        const novaVaca = {
+        const form = document.getElementById('formVacas');
+        const editId = form?.dataset.editing;
+        const vacaData = {
             user_id: currentUser.id,
             brinco: document.getElementById('idVaca').value,
             raca: document.getElementById('racaVaca').value,
@@ -33,9 +35,16 @@ window.salvarVaca = async function() {
             peso: document.getElementById('pesoVaca').value,
             data_entrada: document.getElementById('dataEntradaVaca').value
         };
-        
-        const { error } = await _supabase.from('vacas').insert([novaVaca]);
-        if (error) throw error;
+
+        if (editId) {
+            const { error } = await _supabase.from('vacas').update(vacaData).eq('id', editId).eq('user_id', currentUser.id);
+            if (error) throw error;
+            delete form.dataset.editing;
+            document.querySelector('#formVacas button[type="button"]').textContent = 'Cadastrar Animal';
+        } else {
+            const { error } = await _supabase.from('vacas').insert([vacaData]);
+            if (error) throw error;
+        }
         
         document.getElementById('formVacas').reset();
         await carregarVacas();
@@ -48,7 +57,9 @@ window.salvarVaca = async function() {
 
 window.salvarCavalo = async function() {
     try {
-        const novoCavalo = {
+        const form = document.getElementById('formCavalos');
+        const editId = form?.dataset.editing;
+        const cavaloData = {
             user_id: currentUser.id,
             nome: document.getElementById('nomeCavalo').value,
             raca: document.getElementById('racaCavalo').value,
@@ -58,8 +69,15 @@ window.salvarCavalo = async function() {
             funcao: document.getElementById('funcaoCavalo').value
         };
         
-        const { error } = await _supabase.from('cavalos').insert([novoCavalo]);
-        if (error) throw error;
+        if (editId) {
+            const { error } = await _supabase.from('cavalos').update(cavaloData).eq('id', editId).eq('user_id', currentUser.id);
+            if (error) throw error;
+            delete form.dataset.editing;
+            document.querySelector('#formCavalos button[type="button"]').textContent = 'Cadastrar Cavalo';
+        } else {
+            const { error } = await _supabase.from('cavalos').insert([cavaloData]);
+            if (error) throw error;
+        }
         
         document.getElementById('formCavalos').reset();
         await carregarCavalos();
@@ -72,7 +90,9 @@ window.salvarCavalo = async function() {
 
 window.salvarOvelha = async function() {
     try {
-        const novaOvelha = {
+        const form = document.getElementById('formOvelhas');
+        const editId = form?.dataset.editing;
+        const ovelhaData = {
             user_id: currentUser.id,
             brinco: document.getElementById('idOvelha').value,
             raca: document.getElementById('racaOvelha').value,
@@ -80,8 +100,15 @@ window.salvarOvelha = async function() {
             idade: document.getElementById('idadeOvelha').value
         };
         
-        const { error } = await _supabase.from('ovelhas').insert([novaOvelha]);
-        if (error) throw error;
+        if (editId) {
+            const { error } = await _supabase.from('ovelhas').update(ovelhaData).eq('id', editId).eq('user_id', currentUser.id);
+            if (error) throw error;
+            delete form.dataset.editing;
+            document.querySelector('#formOvelhas button[type="button"]').textContent = 'Cadastrar Ovelha';
+        } else {
+            const { error } = await _supabase.from('ovelhas').insert([ovelhaData]);
+            if (error) throw error;
+        }
         
         document.getElementById('formOvelhas').reset();
         await carregarOvelhas();
@@ -152,10 +179,15 @@ const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Variável global para armazenar os dados do usuário conectado
 let currentUser = null;
+let profileAvatarBase64 = null;
+let currentActionPopup = null;
+let currentEditContext = null;
+let currentReportData = null;
 
 // Verifica se estamos na página de login ou no index.html
 const isLoginPage = window.location.pathname.includes('login.html');
 const isIndexPage = window.location.pathname.includes('index.html') || window.location.pathname.endsWith('/');
+const isProfilePage = window.location.pathname.includes('perfil.html') || window.location.pathname.includes('profile.html');
 
 // Executa assim que a página carrega completamente
 window.addEventListener('DOMContentLoaded', async () => {
@@ -165,6 +197,26 @@ window.addEventListener('DOMContentLoaded', async () => {
         return;
     }
     
+    // Se estiver na página de perfil, verifica autenticação e carrega o perfil
+    if (isProfilePage) {
+        const { data: { session }, error } = await _supabase.auth.getSession();
+        if (session && session.user) {
+            configurarInterfaceLogado(session.user);
+            configurarFormulariosSistema();
+        } else {
+            window.location.href = 'login.html';
+        }
+
+        _supabase.auth.onAuthStateChange((event, session) => {
+            if (session && session.user) {
+                configurarInterfaceLogado(session.user);
+            } else {
+                configurarInterfaceDeslogado();
+            }
+        });
+        return;
+    }
+
     // Se estiver no index.html, verifica autenticação e carrega o sistema
     if (isIndexPage) {
         // 1. Verifica se o usuário já está logado de uma sessão anterior
@@ -238,6 +290,231 @@ async function configurarInterfaceLogado(user) {
 
     // Carrega os dados das tabelas para exibir na tela
     await carregarDadosTodos();
+
+    if (isProfilePage) {
+        loadProfileForm();
+    }
+}
+
+function loadProfileForm() {
+    if (!currentUser) return;
+
+    const nameField = document.getElementById('profileName');
+    const emailField = document.getElementById('profileEmail');
+    const phoneField = document.getElementById('profilePhone');
+    const displayName = document.getElementById('profileDisplayName');
+    const displayEmail = document.getElementById('profileDisplayEmail');
+    const displayPhone = document.getElementById('profileDisplayPhone');
+    const profileAvatarPreview = document.getElementById('profileAvatarPreview');
+
+    const firstName = currentUser.user_metadata?.first_name || '';
+    const lastName = currentUser.user_metadata?.last_name || '';
+    const fullName = [firstName, lastName].filter(Boolean).join(' ').trim() || currentUser.email;
+    const email = currentUser.email || '';
+    const phone = currentUser.user_metadata?.phone || '';
+    const avatarUrl = currentUser.user_metadata?.avatar_url || '';
+
+    if (nameField) nameField.value = fullName;
+    if (emailField) emailField.value = email;
+    if (phoneField) phoneField.value = phone;
+    if (displayName) displayName.textContent = fullName;
+    if (displayEmail) displayEmail.textContent = email;
+    if (displayPhone) displayPhone.textContent = phone || 'Não informado';
+
+    const avatarFallback = avatarUrl || fullName.charAt(0).toUpperCase();
+    setProfileAvatarPreview(avatarFallback);
+    profileAvatarBase64 = avatarUrl && avatarUrl.startsWith('data:') ? avatarUrl : null;
+}
+
+function setProfileAvatarPreview(value) {
+    const profileAvatarPreview = document.getElementById('profileAvatarPreview');
+    if (!profileAvatarPreview) return;
+
+    if (!value) {
+        profileAvatarPreview.style.backgroundImage = 'none';
+        profileAvatarPreview.textContent = 'U';
+        return;
+    }
+
+    if (value.startsWith('data:')) {
+        profileAvatarPreview.style.backgroundImage = `url(${value})`;
+        profileAvatarPreview.style.backgroundSize = 'cover';
+        profileAvatarPreview.style.backgroundPosition = 'center';
+        profileAvatarPreview.textContent = '';
+        return;
+    }
+
+    if (value.length === 1) {
+        profileAvatarPreview.style.backgroundImage = 'none';
+        profileAvatarPreview.textContent = value.toUpperCase();
+        return;
+    }
+
+    profileAvatarPreview.style.backgroundImage = `url(${value})`;
+    profileAvatarPreview.style.backgroundSize = 'cover';
+    profileAvatarPreview.style.backgroundPosition = 'center';
+    profileAvatarPreview.textContent = '';
+}
+
+function showProfileMessage(message, type) {
+    const messageEl = document.getElementById('profile-message');
+    if (!messageEl) return;
+
+    messageEl.textContent = message;
+    messageEl.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+    messageEl.classList.add(type === 'error' ? 'bg-red-100' : 'bg-green-100', type === 'error' ? 'text-red-800' : 'text-green-800');
+}
+
+function hideProfileMessage() {
+    const messageEl = document.getElementById('profile-message');
+    if (messageEl) {
+        messageEl.classList.add('hidden');
+    }
+}
+
+function validarEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function validarTelefone(phone) {
+    return phone.trim() === '' || /^\+?[0-9\s()-]{8,20}$/.test(phone);
+}
+
+async function salvarPerfil(e) {
+    if (e) e.preventDefault();
+    hideProfileMessage();
+
+    if (!currentUser) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    const nameField = document.getElementById('profileName');
+    const emailField = document.getElementById('profileEmail');
+    const phoneField = document.getElementById('profilePhone');
+    const passwordField = document.getElementById('profileSenha');
+    const confirmPasswordField = document.getElementById('profileConfirmarSenha');
+    const saveButton = document.getElementById('saveProfileButton');
+
+    const name = nameField?.value.trim() || '';
+    const email = emailField?.value.trim() || '';
+    const phone = phoneField?.value.trim() || '';
+    const senha = passwordField?.value || '';
+    const confirmarSenha = confirmPasswordField?.value || '';
+
+    if (!name) {
+        showProfileMessage('O nome de usuário é obrigatório.', 'error');
+        return;
+    }
+
+    if (!validarEmail(email)) {
+        showProfileMessage('Informe um e-mail válido.', 'error');
+        return;
+    }
+
+    if (!validarTelefone(phone)) {
+        showProfileMessage('Informe um número de contato válido.', 'error');
+        return;
+    }
+
+    if (senha && senha !== confirmarSenha) {
+        showProfileMessage('As senhas não coincidem.', 'error');
+        return;
+    }
+
+    if (saveButton) {
+        saveButton.disabled = true;
+        saveButton.textContent = 'Salvando...';
+    }
+
+    try {
+        const [firstName, ...restName] = name.split(' ');
+        const lastName = restName.join(' ');
+        const updates = {
+            data: {
+                first_name: firstName,
+                last_name: lastName,
+                phone: phone,
+                avatar_url: profileAvatarBase64 || ''
+            }
+        };
+
+        if (email !== currentUser.email) updates.email = email;
+        if (senha) updates.password = senha;
+
+        const { data, error } = await _supabase.auth.updateUser(updates);
+        if (error) throw error;
+
+        // Re-fetch fresh user state to ensure metadata persisted
+        const { data: userData, error: userFetchError } = await _supabase.auth.getUser();
+        const updatedUser = (userData && userData.user) ? userData.user : (data?.user || currentUser);
+        currentUser = updatedUser;
+        configurarInterfaceLogado(currentUser);
+        loadProfileForm();
+        showProfileMessage('Perfil atualizado com sucesso.', 'success');
+        if (passwordField) passwordField.value = '';
+        if (confirmPasswordField) confirmPasswordField.value = '';
+    } catch (error) {
+        showProfileMessage('Erro ao salvar perfil: ' + error.message, 'error');
+    } finally {
+        if (saveButton) {
+            saveButton.disabled = false;
+            saveButton.textContent = 'Salvar alterações';
+        }
+    }
+}
+
+async function excluirConta() {
+    if (!confirm('Tem certeza que deseja excluir sua conta? Esta ação removerá seus dados do aplicativo e encerrará sua sessão.')) {
+        return;
+    }
+
+    if (!currentUser) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    const deleteButton = document.getElementById('deleteAccountButton');
+    if (deleteButton) {
+        deleteButton.disabled = true;
+        deleteButton.textContent = 'Excluindo...';
+    }
+
+    try {
+        const tables = ['galinhas', 'vacas', 'cavalos', 'ovelhas', 'lancamentos'];
+        for (const table of tables) {
+            await _supabase.from(table).delete().eq('user_id', currentUser.id);
+        }
+
+        await _supabase.auth.signOut();
+        alert('Sua conta e dados foram removidos localmente. Faça login novamente para criar uma nova conta.');
+        window.location.href = 'login.html';
+    } catch (error) {
+        showProfileMessage('Erro ao excluir conta: ' + error.message, 'error');
+    } finally {
+        if (deleteButton) {
+            deleteButton.disabled = false;
+            deleteButton.textContent = 'Excluir conta';
+        }
+    }
+}
+
+function setupProfileActions() {
+    const profileForm = document.getElementById('profile-form');
+    if (profileForm) {
+        profileForm.addEventListener('submit', salvarPerfil);
+    }
+
+    const deleteButton = document.getElementById('deleteAccountButton');
+    if (deleteButton) {
+        deleteButton.addEventListener('click', excluirConta);
+    }
+}
+
+function renderProfileCurrentUser() {
+    if (isProfilePage) {
+        setupProfileActions();
+    }
 }
 
 function configurarInterfaceDeslogado() {
@@ -391,46 +668,59 @@ function configurarFormulariosSistema() {
         }
     });
 
-    // AVATAR UPLOAD
+    // AVATAR CLICK / UPLOAD
     const userAvatar = document.getElementById('userAvatar');
-    const avatarInput = document.getElementById('avatarInput');
-    if (userAvatar && avatarInput) {
-        userAvatar.addEventListener('click', () => {
-            avatarInput.click();
-        });
+    if (userAvatar) {
+        if (isIndexPage) {
+            userAvatar.addEventListener('click', () => {
+                window.location.href = 'perfil.html';
+            });
+        }
 
-        avatarInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
+        if (isProfilePage) {
+            const profileAvatarInput = document.getElementById('profileAvatarInput');
+            const profileAvatarPreview = document.getElementById('profileAvatarPreview');
 
-            // Convert to Base64 with size limit (max 100kb)
-            const reader = new FileReader();
-            reader.onload = async (event) => {
-                const base64String = event.target.result;
-                
-                // Check if file is too large (simple check)
-                if (base64String.length > 100000) {
-                    alert('A imagem é muito grande. Por favor, escolha uma imagem menor (máx 100kb).');
-                    return;
-                }
-
-                // Update user avatar in Supabase
-                const { error } = await _supabase.auth.updateUser({
-                    data: { avatar_url: base64String }
+            if (profileAvatarPreview) {
+                profileAvatarPreview.addEventListener('click', () => {
+                    if (profileAvatarInput) {
+                        profileAvatarInput.click();
+                    }
                 });
+            }
 
-                if (error) {
-                    alert('Erro ao atualizar avatar: ' + error.message);
-                } else {
-                    // Update avatar display
-                    userAvatar.style.backgroundImage = `url(${base64String})`;
-                    userAvatar.style.backgroundSize = 'cover';
-                    userAvatar.style.backgroundPosition = 'center';
-                    userAvatar.textContent = '';
-                }
-            };
-            reader.readAsDataURL(file);
-        });
+            if (profileAvatarInput) {
+                profileAvatarInput.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const base64String = event.target.result;
+                        if (base64String.length > 100000) {
+                            showProfileMessage('A imagem é muito grande. Escolha um arquivo menor (máx 100kb).', 'error');
+                            return;
+                        }
+                        profileAvatarBase64 = base64String;
+                        if (profileAvatarPreview) {
+                            profileAvatarPreview.style.backgroundImage = `url(${base64String})`;
+                            profileAvatarPreview.style.backgroundSize = 'cover';
+                            profileAvatarPreview.style.backgroundPosition = 'center';
+                            profileAvatarPreview.textContent = '';
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+        }
+    }
+
+    if (isProfilePage) {
+        setupProfileActions();
+    }
+
+    if (isIndexPage) {
+        setupReportModule();
     }
 
     // SESSION TIMEOUT (5 minutos de inatividade)
@@ -641,6 +931,9 @@ function refreshSectionData(sectionId) {
         case 'lancamento':
             renderLancamentosList();
             break;
+        case 'relatorios':
+            renderReportSection();
+            break;
     }
 }
 
@@ -693,6 +986,135 @@ function renderUltimosLancamentos() {
     `).join('');
 }
 
+function getAnimalById(type, id) {
+    switch (type) {
+        case 'vacas': return vacasData.find(item => String(item.id) === String(id));
+        case 'cavalos': return cavalosData.find(item => String(item.id) === String(id));
+        case 'ovelhas': return ovelhasData.find(item => String(item.id) === String(id));
+        default: return null;
+    }
+}
+
+function showAnimalActionMenu(type, id, label, event) {
+    event.stopPropagation();
+    const popup = document.getElementById('animal-action-popup');
+    if (!popup) return;
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    popup.style.top = `${window.scrollY + rect.bottom + 8}px`;
+    popup.style.left = `${Math.min(window.scrollX + rect.left, window.innerWidth - 300)}px`;
+
+    popup.innerHTML = `
+        <div class="font-semibold text-gray-800 mb-2">${label}</div>
+        <button type="button" class="animal-action-option" onclick="onAnimalActionSelect('editar', '${type}', '${id}')">Editar dados</button>
+        <button type="button" class="animal-action-option" onclick="onAnimalActionSelect('vacina', '${type}', '${id}')">Registrar vacina</button>
+        <button type="button" class="animal-action-option" onclick="onAnimalActionSelect('pesagem', '${type}', '${id}')">Registrar pesagem</button>
+        <button type="button" class="animal-action-option" onclick="onAnimalActionSelect('producao', '${type}', '${id}')">Registrar produção</button>
+        <button type="button" class="animal-action-option" onclick="onAnimalActionSelect('historico', '${type}', '${id}')">Histórico</button>
+    `;
+
+    popup.classList.remove('hidden');
+    currentActionPopup = popup;
+}
+
+function hideAnimalActionPopup() {
+    const popup = document.getElementById('animal-action-popup');
+    if (popup) {
+        popup.classList.add('hidden');
+    }
+    currentActionPopup = null;
+}
+
+function onAnimalActionSelect(action, type, id) {
+    hideAnimalActionPopup();
+    const item = getAnimalById(type, id);
+    if (!item) return;
+
+    switch (action) {
+        case 'editar':
+            openEditAnimal(type, id);
+            break;
+        case 'vacina':
+            openActionModal('Registrar vacina', `Registro de vacina para ${type === 'cavalos' ? item.nome : item.brinco}.`);
+            break;
+        case 'pesagem':
+            openActionModal('Registrar pesagem', `Atualize o peso em quilogramas para ${type === 'cavalos' ? item.nome : item.brinco}.`);
+            break;
+        case 'producao':
+            showSection('lancamento');
+            break;
+        case 'historico':
+            showSection('lancamento');
+            break;
+    }
+}
+
+function openActionModal(title, content) {
+    const modal = document.getElementById('animal-action-modal');
+    const contentEl = document.getElementById('animal-action-modal-content');
+    const titleEl = document.getElementById('animal-action-modal-title');
+    if (!modal || !contentEl || !titleEl) return;
+
+    titleEl.textContent = title;
+    contentEl.innerHTML = `<p class="text-gray-600">${content}</p>`;
+    modal.classList.add('open');
+}
+
+function closeAnimalActionModal() {
+    const modal = document.getElementById('animal-action-modal');
+    if (modal) {
+        modal.classList.remove('open');
+    }
+}
+
+function openEditAnimal(type, id) {
+    const item = getAnimalById(type, id);
+    if (!item) return;
+
+    showSection(type);
+    currentEditContext = { type, id };
+
+    if (type === 'vacas') {
+        const form = document.getElementById('formVacas');
+        if (form) form.dataset.editing = id;
+        document.getElementById('idVaca').value = item.brinco || '';
+        document.getElementById('racaVaca').value = item.raca || '';
+        document.getElementById('categoriaVaca').value = item.categoria || '';
+        document.getElementById('pesoVaca').value = item.peso || '';
+        document.getElementById('dataEntradaVaca').value = item.data_entrada || '';
+        document.querySelector('#formVacas button[type="button"]').textContent = 'Atualizar animal';
+    }
+    if (type === 'cavalos') {
+        const form = document.getElementById('formCavalos');
+        if (form) form.dataset.editing = id;
+        document.getElementById('nomeCavalo').value = item.nome || '';
+        document.getElementById('racaCavalo').value = item.raca || '';
+        document.getElementById('paiCavalo').value = item.pai || '';
+        document.getElementById('maeCavalo').value = item.mae || '';
+        document.getElementById('nascimentoCavalo').value = item.nascimento || '';
+        document.getElementById('funcaoCavalo').value = item.funcao || '';
+        document.querySelector('#formCavalos button[type="button"]').textContent = 'Atualizar animal';
+    }
+    if (type === 'ovelhas') {
+        const form = document.getElementById('formOvelhas');
+        if (form) form.dataset.editing = id;
+        document.getElementById('idOvelha').value = item.brinco || '';
+        document.getElementById('racaOvelha').value = item.raca || '';
+        document.getElementById('tipoLaOvelha').value = item.tipo_la || '';
+        document.getElementById('idadeOvelha').value = item.idade || '';
+        document.querySelector('#formOvelhas button[type="button"]').textContent = 'Atualizar animal';
+    }
+}
+
+document.addEventListener('click', (event) => {
+    if (currentActionPopup) {
+        const popup = currentActionPopup;
+        if (!popup.contains(event.target)) {
+            hideAnimalActionPopup();
+        }
+    }
+});
+
 // Galinhas functions
 function renderGalinhasList() {
     const container = document.getElementById('listaGalinhas');
@@ -731,15 +1153,19 @@ window.deleteGalinha = async function(id) {
 // Vacas functions
 function renderVacasList() {
     const tbody = document.getElementById('tbodyVacas');
+    const cards = document.getElementById('cardsVacas');
     
     if (vacasData.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-4 text-center text-gray-500">Nenhum animal cadastrado</td></tr>';
+        if (cards) cards.innerHTML = '<div class="p-4 bg-gray-50 rounded-lg text-center text-gray-500">Nenhum animal cadastrado</div>';
         return;
     }
     
     tbody.innerHTML = vacasData.map(v => `
         <tr class="border-b border-gray-100">
-            <td class="px-4 py-3">${v.brinco}</td>
+            <td class="px-4 py-3">
+                <button type="button" class="text-left text-green-700 font-medium hover:underline" onclick="showAnimalActionMenu('vacas', '${v.id}', '${v.brinco}', event)">${v.brinco}</button>
+            </td>
             <td class="px-4 py-3">${v.raca}</td>
             <td class="px-4 py-3"><span class="badge badge-green">${v.categoria}</span></td>
             <td class="px-4 py-3">${v.peso} kg</td>
@@ -748,6 +1174,20 @@ function renderVacasList() {
             </td>
         </tr>
     `).join('');
+
+    if (cards) {
+        cards.innerHTML = vacasData.map(v => `
+            <div class="bg-white rounded-2xl shadow-sm p-4 border border-gray-200">
+                <div class="flex items-center justify-between gap-3 mb-3">
+                    <button type="button" class="text-left text-green-700 font-semibold text-base hover:underline" onclick="showAnimalActionMenu('vacas', '${v.id}', '${v.brinco}', event)">${v.brinco}</button>
+                    <button onclick="deleteVaca('${v.id}')" class="btn-delete">Excluir</button>
+                </div>
+                <p class="text-sm text-gray-600">Raça: ${v.raca}</p>
+                <p class="text-sm text-gray-600">Categoria: ${v.categoria}</p>
+                <p class="text-sm text-gray-600">Peso: ${v.peso} kg</p>
+            </div>
+        `).join('');
+    }
 }
 
 window.deleteVaca = async function(id) {
@@ -767,15 +1207,19 @@ window.deleteVaca = async function(id) {
 // Cavalos functions
 function renderCavalosList() {
     const tbody = document.getElementById('tbodyCavalos');
+    const cards = document.getElementById('cardsCavalos');
     
     if (cavalosData.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-4 text-center text-gray-500">Nenhum cavalo cadastrado</td></tr>';
+        if (cards) cards.innerHTML = '<div class="p-4 bg-gray-50 rounded-lg text-center text-gray-500">Nenhum cavalo cadastrado</div>';
         return;
     }
     
     tbody.innerHTML = cavalosData.map(c => `
         <tr class="border-b border-gray-100">
-            <td class="px-4 py-3 font-medium">${c.nome}</td>
+            <td class="px-4 py-3 font-medium">
+                <button type="button" class="text-left text-green-700 font-medium hover:underline" onclick="showAnimalActionMenu('cavalos', '${c.id}', '${c.nome}', event)">${c.nome}</button>
+            </td>
             <td class="px-4 py-3">${c.raca}</td>
             <td class="px-4 py-3"><span class="badge badge-blue">${c.funcao}</span></td>
             <td class="px-4 py-3">${formatDate(c.nascimento)}</td>
@@ -784,6 +1228,20 @@ function renderCavalosList() {
             </td>
         </tr>
     `).join('');
+
+    if (cards) {
+        cards.innerHTML = cavalosData.map(c => `
+            <div class="bg-white rounded-2xl shadow-sm p-4 border border-gray-200">
+                <div class="flex items-center justify-between gap-3 mb-3">
+                    <button type="button" class="text-left text-green-700 font-semibold text-base hover:underline" onclick="showAnimalActionMenu('cavalos', '${c.id}', '${c.nome}', event)">${c.nome}</button>
+                    <button onclick="deleteCavalo('${c.id}')" class="btn-delete">Excluir</button>
+                </div>
+                <p class="text-sm text-gray-600">Raça: ${c.raca}</p>
+                <p class="text-sm text-gray-600">Função: ${c.funcao}</p>
+                <p class="text-sm text-gray-600">Nascimento: ${formatDate(c.nascimento)}</p>
+            </div>
+        `).join('');
+    }
 }
 
 window.deleteCavalo = async function(id) {
@@ -803,15 +1261,19 @@ window.deleteCavalo = async function(id) {
 // Ovelhas functions
 function renderOvelhasList() {
     const tbody = document.getElementById('tbodyOvelhas');
+    const cards = document.getElementById('cardsOvelhas');
     
     if (ovelhasData.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-4 text-center text-gray-500">Nenhuma ovelha cadastrada</td></tr>';
+        if (cards) cards.innerHTML = '<div class="p-4 bg-gray-50 rounded-lg text-center text-gray-500">Nenhuma ovelha cadastrada</div>';
         return;
     }
     
     tbody.innerHTML = ovelhasData.map(o => `
         <tr class="border-b border-gray-100">
-            <td class="px-4 py-3">${o.brinco}</td>
+            <td class="px-4 py-3">
+                <button type="button" class="text-left text-green-700 font-medium hover:underline" onclick="showAnimalActionMenu('ovelhas', '${o.id}', '${o.brinco}', event)">${o.brinco}</button>
+            </td>
             <td class="px-4 py-3">${o.raca}</td>
             <td class="px-4 py-3"><span class="badge badge-purple">${o.tipo_la}</span></td>
             <td class="px-4 py-3">${o.idade} anos</td>
@@ -820,6 +1282,20 @@ function renderOvelhasList() {
             </td>
         </tr>
     `).join('');
+
+    if (cards) {
+        cards.innerHTML = ovelhasData.map(o => `
+            <div class="bg-white rounded-2xl shadow-sm p-4 border border-gray-200">
+                <div class="flex items-center justify-between gap-3 mb-3">
+                    <button type="button" class="text-left text-green-700 font-semibold text-base hover:underline" onclick="showAnimalActionMenu('ovelhas', '${o.id}', '${o.brinco}', event)">${o.brinco}</button>
+                    <button onclick="deleteOvelha('${o.id}')" class="btn-delete">Excluir</button>
+                </div>
+                <p class="text-sm text-gray-600">Raça: ${o.raca}</p>
+                <p class="text-sm text-gray-600">Tipo de lã: ${o.tipo_la}</p>
+                <p class="text-sm text-gray-600">Idade: ${o.idade} anos</p>
+            </div>
+        `).join('');
+    }
 }
 
 window.deleteOvelha = async function(id) {
@@ -839,9 +1315,11 @@ window.deleteOvelha = async function(id) {
 // Lancamento functions
 function renderLancamentosList() {
     const tbody = document.getElementById('tbodyLancamentos');
+    const cards = document.getElementById('cardsLancamentos');
     
     if (lancamentosData.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-4 text-center text-gray-500">Nenhum lançamento registrado</td></tr>';
+        if (cards) cards.innerHTML = '<div class="p-4 bg-gray-50 rounded-lg text-center text-gray-500">Nenhum lançamento registrado</div>';
         return;
     }
     
@@ -858,6 +1336,355 @@ function renderLancamentosList() {
             </td>
         </tr>
     `).join('');
+
+    if (cards) {
+        cards.innerHTML = sortedLancamentos.map(l => `
+            <div class="bg-white rounded-2xl shadow-sm p-4 border border-gray-200">
+                <div class="flex items-center justify-between gap-3 mb-3">
+                    <p class="font-semibold text-gray-800">${formatDate(l.data)}</p>
+                    <button onclick="deleteLancamento('${l.id}')" class="btn-delete">Excluir</button>
+                </div>
+                <p class="text-sm text-gray-600">Leite: ${l.leite} L</p>
+                <p class="text-sm text-gray-600">Ovos: ${l.ovos}</p>
+                <p class="text-sm text-gray-600">Lã: ${l.la} kg</p>
+            </div>
+        `).join('');
+    }
+}
+
+function setupReportModule() {
+    const reportPeriod = document.getElementById('reportPeriod');
+    const startDateInput = document.getElementById('reportStartDate');
+    const endDateInput = document.getElementById('reportEndDate');
+    const generateButton = document.getElementById('generateReportBtn');
+    const downloadButton = document.getElementById('downloadReportBtn');
+
+    function updateCustomDateFields() {
+        const custom = reportPeriod && reportPeriod.value === 'personalizado';
+        if (startDateInput) startDateInput.disabled = !custom;
+        if (endDateInput) endDateInput.disabled = !custom;
+    }
+
+    if (reportPeriod) {
+        reportPeriod.addEventListener('change', () => {
+            updateCustomDateFields();
+            renderReportSection();
+        });
+    }
+
+    if (generateButton) {
+        generateButton.addEventListener('click', () => {
+            const result = generateReportData();
+            if (result) {
+                currentReportData = result;
+                renderReportPreview(result);
+                if (downloadButton) {
+                    downloadButton.disabled = false;
+                }
+            }
+        });
+    }
+
+    if (downloadButton) {
+        downloadButton.addEventListener('click', () => {
+            if (!currentReportData) return;
+            downloadPdfReport(currentReportData);
+        });
+    }
+
+    updateCustomDateFields();
+}
+
+function renderReportSection() {
+    const reportPreview = document.getElementById('reportPreview');
+    const message = document.getElementById('reportMessage');
+    const downloadButton = document.getElementById('downloadReportBtn');
+    currentReportData = null;
+    if (message) message.classList.add('hidden');
+    if (reportPreview) reportPreview.classList.add('hidden');
+    if (downloadButton) downloadButton.disabled = true;
+}
+
+function getReportRange() {
+    const period = document.getElementById('reportPeriod')?.value || 'dia';
+    const startInput = document.getElementById('reportStartDate');
+    const endInput = document.getElementById('reportEndDate');
+    const today = new Date();
+    let start = new Date(today.setHours(0,0,0,0));
+    let end = new Date(today.setHours(23,59,59,999));
+
+    switch (period) {
+        case 'semana':
+            start = new Date();
+            start.setDate(start.getDate() - 6);
+            start.setHours(0,0,0,0);
+            break;
+        case 'mes':
+            start = new Date();
+            start.setDate(1);
+            start.setHours(0,0,0,0);
+            break;
+        case 'ano':
+            start = new Date();
+            start.setMonth(0,0);
+            start.setHours(0,0,0,0);
+            break;
+        case 'personalizado':
+            if (startInput && startInput.value) {
+                start = new Date(startInput.value);
+                start.setHours(0,0,0,0);
+            }
+            if (endInput && endInput.value) {
+                end = new Date(endInput.value);
+                end.setHours(23,59,59,999);
+            }
+            break;
+        case 'dia':
+        default:
+            start = new Date();
+            start.setHours(0,0,0,0);
+            break;
+    }
+
+    return { start, end, label: getReportPeriodLabel(period, start, end) };
+}
+
+function getReportPeriodLabel(period, start, end) {
+    const format = (date) => date.toLocaleDateString('pt-BR');
+    switch (period) {
+        case 'dia':
+            return `Dia (${format(start)})`;
+        case 'semana':
+            return `Semana (${format(start)} - ${format(end)})`;
+        case 'mes':
+            return `Mês (${format(start)} - ${format(end)})`;
+        case 'ano':
+            return `Ano (${format(start).slice(-4)})`;
+        case 'personalizado':
+            return `${format(start)} até ${format(end)}`;
+        default:
+            return `${format(start)} - ${format(end)}`;
+    }
+}
+
+function filterItemsByPeriod(items, dateField, start, end) {
+    return items.filter(item => {
+        const value = item[dateField] || item.created_at;
+        if (!value) return false;
+        const date = new Date(value);
+        return date >= start && date <= end;
+    });
+}
+
+function generateReportData() {
+    const range = getReportRange();
+    const report = {
+        generatedAt: new Date(),
+        periodLabel: range.label,
+        farmName: currentUser?.user_metadata?.farm_name || currentUser?.user_metadata?.first_name || 'Fazenda Agropecuária',
+        period: `${range.start.toLocaleDateString('pt-BR')} - ${range.end.toLocaleDateString('pt-BR')}`,
+        animals: {
+            totalVacas: vacasData.length,
+            totalCavalos: cavalosData.length,
+            totalOvelhas: ovelhasData.length,
+            raças: {},
+            entriesInPeriod: 0
+        },
+        production: {
+            records: [],
+            totalLeite: 0,
+            totalOvos: 0,
+            totalLa: 0
+        },
+        vaccines: { records: [], distinctAnimals: 0, upcoming: 0 },
+        weights: { records: [], lastWeights: [], averageWeight: 0, count: 0 },
+        history: []
+    };
+
+    const productionRecords = filterItemsByPeriod(lancamentosData, 'data', range.start, range.end);
+    report.production.records = productionRecords;
+    report.production.totalLeite = productionRecords.reduce((sum, item) => sum + parseFloat(item.leite || 0), 0);
+    report.production.totalOvos = productionRecords.reduce((sum, item) => sum + parseInt(item.ovos || 0), 0);
+    report.production.totalLa = productionRecords.reduce((sum, item) => sum + parseFloat(item.la || 0), 0);
+
+    const animalEntries = [...vacasData, ...cavalosData, ...ovelhasData].filter(item => {
+        const date = item.created_at ? new Date(item.created_at) : new Date(item.data_entrada || item.nascimento || null);
+        return date instanceof Date && !isNaN(date) && date >= range.start && date <= range.end;
+    });
+    report.animals.entriesInPeriod = animalEntries.length;
+
+    const allAnimals = [...vacasData, ...cavalosData, ...ovelhasData];
+    allAnimals.forEach(item => {
+        const key = item.raca || item.tipo_la || 'Indefinido';
+        report.animals.raças[key] = (report.animals.raças[key] || 0) + 1;
+    });
+
+    report.weights.lastWeights = vacasData.map(item => ({
+        id: item.id,
+        name: item.brinco || 'Vaca',
+        lastWeight: item.peso ? `${item.peso} kg` : 'Não informado'
+    }));
+    const weights = vacasData.map(item => parseFloat(item.peso || 0)).filter(Boolean);
+    report.weights.count = weights.length;
+    report.weights.averageWeight = weights.length ? (weights.reduce((sum, v) => sum + v, 0) / weights.length).toFixed(1) : 0;
+    report.weights.records = report.weights.lastWeights;
+
+    report.vaccines.records = []; // No vaccine table available in current schema
+    report.vaccines.distinctAnimals = 0;
+    report.vaccines.upcoming = 0;
+
+    const historyItems = [];
+    productionRecords.forEach(item => {
+        historyItems.push({
+            date: new Date(item.data),
+            message: `Produção registrada: ${item.leite || 0}L, ${item.ovos || 0} ovos, ${item.la || 0}kg de lã.`
+        });
+    });
+    animalEntries.forEach(item => {
+        const date = item.created_at ? new Date(item.created_at) : new Date(item.data_entrada || item.nascimento || null);
+        if (!(date instanceof Date) || isNaN(date)) return;
+        const label = item.brinco || item.nome || 'Animal';
+        historyItems.push({
+            date,
+            message: `Entrada cadastrada: ${label} (${item.raca || item.tipo_la || 'sem raça'})`
+        });
+    });
+    report.history = historyItems.sort((a, b) => a.date - b.date).map(item => `${item.date.toLocaleDateString('pt-BR')} - ${item.message}`);
+
+    return report;
+}
+
+function renderReportPreview(report) {
+    document.getElementById('reportPreview')?.classList.remove('hidden');
+    document.getElementById('reportTotalVacas').textContent = report.animals.totalVacas;
+    document.getElementById('reportTotalCavalos').textContent = report.animals.totalCavalos;
+    document.getElementById('reportTotalOvelhas').textContent = report.animals.totalOvelhas;
+    document.getElementById('reportProductionCount').textContent = report.production.records.length;
+    document.getElementById('reportTotalLeite').textContent = report.production.totalLeite.toFixed(1);
+    document.getElementById('reportTotalOvos').textContent = report.production.totalOvos;
+    document.getElementById('reportTotalLa').textContent = report.production.totalLa.toFixed(1);
+    document.getElementById('reportVaccineCount').textContent = report.vaccines.records.length;
+    document.getElementById('reportVaccinatedAnimals').textContent = report.vaccines.distinctAnimals;
+    document.getElementById('reportUpcomingVaccines').textContent = report.vaccines.upcoming;
+    document.getElementById('reportWeightCount').textContent = report.weights.records.length;
+    document.getElementById('reportLastWeights').textContent = report.weights.records.length ? report.weights.records.map(item => `${item.name}: ${item.lastWeight}`).join(' | ') : 'Nenhum registro';
+    document.getElementById('reportAverageWeight').textContent = report.weights.averageWeight || '0';
+    const history = document.getElementById('reportHistory');
+    if (history) {
+        history.innerHTML = report.history.length ? report.history.map(item => `<p>${item}</p>`).join('') : '<p class="text-gray-500">Nenhum evento registrado neste período.</p>';
+    }
+}
+
+function downloadPdfReport(report) {
+    const doc = new window.jspdf.jsPDF({unit: 'pt', format: 'a4'});
+    const margin = 40;
+    let y = margin;
+
+    doc.setFontSize(18);
+    doc.text('Relatório da Fazenda', margin, y);
+    y += 25;
+
+    doc.setFontSize(12);
+    doc.text(`Nome da fazenda: ${report.farmName}`, margin, y);
+    y += 18;
+    doc.text(`Período: ${report.period}`, margin, y);
+    y += 18;
+    doc.text(`Data de emissão: ${report.generatedAt.toLocaleDateString('pt-BR')} ${report.generatedAt.toLocaleTimeString('pt-BR')}`, margin, y);
+    y += 25;
+
+    doc.setFontSize(14);
+    doc.text('1. Animais', margin, y);
+    y += 18;
+    doc.setFontSize(11);
+    doc.text(`Total de vacas e bois: ${report.animals.totalVacas}`, margin, y);
+    y += 16;
+    doc.text(`Total de cavalos: ${report.animals.totalCavalos}`, margin, y);
+    y += 16;
+    doc.text(`Total de ovelhas: ${report.animals.totalOvelhas}`, margin, y);
+    y += 18;
+
+    const raceRows = Object.entries(report.animals.raças).map(([raça, qtd]) => [raça, String(qtd)]);
+    if (raceRows.length) {
+        doc.autoTable({
+            head: [['Raça', 'Quantidade']],
+            body: raceRows,
+            startY: y,
+            margin: { left: margin, right: margin },
+            theme: 'grid',
+            headStyles: { fillColor: [22, 163, 74] },
+            styles: { fontSize: 10 }
+        });
+        y = doc.lastAutoTable.finalY + 10;
+    }
+
+    if (report.animals.entriesInPeriod >= 0) {
+        doc.text(`Entradas cadastradas no período: ${report.animals.entriesInPeriod}`, margin, y);
+        y += 25;
+    }
+
+    doc.setFontSize(14);
+    doc.text('2. Produção', margin, y);
+    y += 18;
+    doc.setFontSize(11);
+    doc.text(`Produções registradas: ${report.production.records.length}`, margin, y);
+    y += 16;
+    doc.text(`Total de leite: ${report.production.totalLeite.toFixed(1)} L`, margin, y);
+    y += 16;
+    doc.text(`Total de ovos: ${report.production.totalOvos}`, margin, y);
+    y += 16;
+    doc.text(`Total de lã: ${report.production.totalLa.toFixed(1)} kg`, margin, y);
+    y += 25;
+
+    doc.setFontSize(14);
+    doc.text('3. Vacinas', margin, y);
+    y += 18;
+    doc.setFontSize(11);
+    if (report.vaccines.records.length) {
+        doc.text(`Vacinas registradas: ${report.vaccines.records.length}`, margin, y);
+        y += 16;
+    } else {
+        doc.text('Nenhum registro de vacinas encontrado no sistema.', margin, y);
+        y += 16;
+    }
+    doc.text(`Animais vacinados: ${report.vaccines.distinctAnimals}`, margin, y);
+    y += 16;
+    doc.text(`Próximas vacinas registradas: ${report.vaccines.upcoming}`, margin, y);
+    y += 25;
+
+    doc.setFontSize(14);
+    doc.text('4. Pesagens', margin, y);
+    y += 18;
+    doc.setFontSize(11);
+    if (report.weights.records.length) {
+        const weightsText = report.weights.records.slice(0, 5).map(item => `${item.name}: ${item.lastWeight}`).join(' | ');
+        doc.text(`Último peso registrado: ${weightsText}`, margin, y);
+        y += 16;
+        doc.text(`Média de peso (vacas): ${report.weights.averageWeight} kg`, margin, y);
+        y += 18;
+    } else {
+        doc.text('Nenhum registro de pesagem disponível no sistema.', margin, y);
+        y += 18;
+    }
+
+    doc.setFontSize(14);
+    doc.text('5. Histórico', margin, y);
+    y += 18;
+    doc.setFontSize(11);
+    if (report.history.length) {
+        report.history.slice(0, 20).forEach(line => {
+            if (y > 730) {
+                doc.addPage();
+                y = margin;
+            }
+            doc.text(line, margin, y);
+            y += 14;
+        });
+    } else {
+        doc.text('Nenhum evento registrado no período.', margin, y);
+    }
+
+    const fileName = `relatorio-fazenda-${new Date().toISOString().slice(0,10)}.pdf`;
+    doc.save(fileName);
 }
 
 window.deleteLancamento = async function(id) {
