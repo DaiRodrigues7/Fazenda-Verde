@@ -1035,33 +1035,280 @@ function onAnimalActionSelect(action, type, id) {
             openEditAnimal(type, id);
             break;
         case 'vacina':
-            openActionModal('Registrar vacina', `Registro de vacina para ${type === 'cavalos' ? item.nome : item.brinco}.`);
+            openVaccineModal(type, id, item);
             break;
         case 'pesagem':
-            openActionModal('Registrar pesagem', `Atualize o peso em quilogramas para ${type === 'cavalos' ? item.nome : item.brinco}.`);
+            openWeighingModal(type, id, item);
             break;
         case 'producao':
             showSection('lancamento');
             break;
         case 'historico':
-            showSection('lancamento');
+            openAnimalHistoryModal(type, id, item);
             break;
     }
 }
 
-function openActionModal(title, content) {
+function openVaccineModal(type, id, item) {
     const modal = document.getElementById('animal-action-modal');
     const contentEl = document.getElementById('animal-action-modal-content');
     const titleEl = document.getElementById('animal-action-modal-title');
-    if (!modal || !contentEl || !titleEl) return;
+    const actionsEl = document.getElementById('animal-action-modal-actions');
+    if (!modal || !contentEl || !titleEl || !actionsEl) return;
 
-    titleEl.textContent = title;
-    contentEl.innerHTML = `<p class="text-gray-600">${content}</p>`;
+    const animalName = type === 'cavalos' ? item.nome : item.brinco;
+    titleEl.textContent = 'Registrar vacina';
+    
+    contentEl.innerHTML = `
+        <p class="text-gray-600 mb-4">Registro de vacina para ${animalName}.</p>
+        <form id="vaccine-form" class="space-y-4">
+            <input type="hidden" id="vaccine-animal-id" value="${id}">
+            <input type="hidden" id="vaccine-animal-type" value="${type}">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nome da vacina *</label>
+                <input type="text" id="vaccine-name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Ex: Febre Aftosa">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Data de aplicação *</label>
+                <input type="date" id="vaccine-date" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Próxima dose</label>
+                <input type="date" id="vaccine-next-dose" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Observação</label>
+                <textarea id="vaccine-observation" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Ex: Lote 12345"></textarea>
+            </div>
+        </form>
+    `;
+    
+    actionsEl.innerHTML = `
+        <button type="button" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300" onclick="closeAnimalActionModal()">Cancelar</button>
+        <button type="button" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700" onclick="saveVaccine()">Salvar vacina</button>
+    `;
+    
     modal.classList.add('open');
+    
+    // Set default date to today
+    document.getElementById('vaccine-date').value = new Date().toISOString().split('T')[0];
+}
+
+function openWeighingModal(type, id, item) {
+    const modal = document.getElementById('animal-action-modal');
+    const contentEl = document.getElementById('animal-action-modal-content');
+    const titleEl = document.getElementById('animal-action-modal-title');
+    const actionsEl = document.getElementById('animal-action-modal-actions');
+    if (!modal || !contentEl || !titleEl || !actionsEl) return;
+
+    const animalName = type === 'cavalos' ? item.nome : item.brinco;
+    const currentWeight = item.peso || '';
+    titleEl.textContent = 'Registrar pesagem';
+    
+    contentEl.innerHTML = `
+        <p class="text-gray-600 mb-4">Atualize o peso em quilogramas para ${animalName}.</p>
+        <form id="weighing-form" class="space-y-4">
+            <input type="hidden" id="weighing-animal-id" value="${id}">
+            <input type="hidden" id="weighing-animal-type" value="${type}">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Peso atual (kg) *</label>
+                <input type="number" id="weighing-weight" required min="0" step="0.1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Ex: 450" value="${currentWeight}">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Data da pesagem *</label>
+                <input type="date" id="weighing-date" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Observação</label>
+                <textarea id="weighing-observation" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Ex: Animal em bom estado"></textarea>
+            </div>
+        </form>
+    `;
+    
+    actionsEl.innerHTML = `
+        <button type="button" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300" onclick="closeAnimalActionModal()">Cancelar</button>
+        <button type="button" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700" onclick="saveWeighing()">Salvar pesagem</button>
+    `;
+    
+    modal.classList.add('open');
+    
+    // Set default date to today
+    document.getElementById('weighing-date').value = new Date().toISOString().split('T')[0];
 }
 
 function closeAnimalActionModal() {
     const modal = document.getElementById('animal-action-modal');
+    if (modal) {
+        modal.classList.remove('open');
+    }
+}
+
+window.saveVaccine = async function() {
+    try {
+        const animalId = document.getElementById('vaccine-animal-id').value;
+        const animalTipo = document.getElementById('vaccine-animal-type').value;
+        const nomeVacina = document.getElementById('vaccine-name').value;
+        const dataAplicacao = document.getElementById('vaccine-date').value;
+        const proximaDose = document.getElementById('vaccine-next-dose').value;
+        const observacao = document.getElementById('vaccine-observation').value;
+
+        if (!nomeVacina || !dataAplicacao) {
+            alert('Preencha os campos obrigatórios.');
+            return;
+        }
+
+        const vacinaData = {
+            user_id: currentUser.id,
+            animal_id: animalId,
+            animal_tipo: animalTipo,
+            nome_vacina: nomeVacina,
+            data_aplicacao: dataAplicacao,
+            proxima_dose: proximaDose || null,
+            observacao: observacao || null
+        };
+
+        const { error } = await _supabase.from('vacinas').insert([vacinaData]);
+        if (error) throw error;
+
+        alert('Vacina registrada com sucesso!');
+        closeAnimalActionModal();
+    } catch (error) {
+        alert('Erro ao salvar vacina: ' + error.message);
+    }
+};
+
+window.saveWeighing = async function() {
+    try {
+        const animalId = document.getElementById('weighing-animal-id').value;
+        const animalTipo = document.getElementById('weighing-animal-type').value;
+        const peso = document.getElementById('weighing-weight').value;
+        const dataPesagem = document.getElementById('weighing-date').value;
+        const observacao = document.getElementById('weighing-observation').value;
+
+        if (!peso || !dataPesagem) {
+            alert('Preencha os campos obrigatórios.');
+            return;
+        }
+
+        const pesagemData = {
+            user_id: currentUser.id,
+            animal_id: animalId,
+            animal_tipo: animalTipo,
+            peso: parseFloat(peso),
+            data_pesagem: dataPesagem,
+            observacao: observacao || null
+        };
+
+        const { error } = await _supabase.from('pesagens').insert([pesagemData]);
+        if (error) throw error;
+
+        // Update the animal's current weight in the main table
+        if (animalTipo === 'vacas') {
+            const { error: updateError } = await _supabase
+                .from('vacas')
+                .update({ peso: parseFloat(peso) })
+                .eq('id', animalId)
+                .eq('user_id', currentUser.id);
+            if (updateError) throw updateError;
+            await carregarVacas();
+            renderVacasList();
+        }
+
+        alert('Pesagem registrada com sucesso!');
+        closeAnimalActionModal();
+    } catch (error) {
+        alert('Erro ao salvar pesagem: ' + error.message);
+    }
+};
+
+async function openAnimalHistoryModal(type, id, item) {
+    const modal = document.getElementById('animal-history-modal');
+    const contentEl = document.getElementById('animal-history-modal-content');
+    const titleEl = document.getElementById('animal-history-modal-title');
+    if (!modal || !contentEl || !titleEl) return;
+
+    const animalName = type === 'cavalos' ? item.nome : item.brinco;
+    titleEl.textContent = `Histórico - ${animalName}`;
+    
+    contentEl.innerHTML = '<p class="text-gray-500 text-center">Carregando histórico...</p>';
+    modal.classList.add('open');
+
+    try {
+        // Fetch vaccines
+        const { data: vaccines, error: vaccinesError } = await _supabase
+            .from('vacinas')
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .eq('animal_id', id)
+            .order('data_aplicacao', { ascending: false });
+
+        // Fetch weighings
+        const { data: weighings, error: weighingsError } = await _supabase
+            .from('pesagens')
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .eq('animal_id', id)
+            .order('data_pesagem', { ascending: false });
+
+        let html = '';
+
+        // Vaccines section
+        html += '<div class="mb-6">';
+        html += '<h3 class="text-lg font-semibold text-green-800 mb-3">💉 Vacinas</h3>';
+        if (vaccines && vaccines.length > 0) {
+            html += '<div class="space-y-2">';
+            vaccines.forEach(v => {
+                html += `
+                    <div class="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                        <p class="font-medium text-gray-800">${v.nome_vacina}</p>
+                        <p class="text-sm text-gray-600">Aplicada: ${formatDate(v.data_aplicacao)}</p>
+                        ${v.proxima_dose ? `<p class="text-sm text-gray-600">Próxima dose: ${formatDate(v.proxima_dose)}</p>` : ''}
+                        ${v.observacao ? `<p class="text-sm text-gray-500 mt-1">Obs: ${v.observacao}</p>` : ''}
+                    </div>
+                `;
+            });
+            html += '</div>';
+        } else {
+            html += '<p class="text-gray-500 text-sm">Nenhuma vacina registrada.</p>';
+        }
+        html += '</div>';
+
+        // Weighings section
+        html += '<div class="mb-6">';
+        html += '<h3 class="text-lg font-semibold text-purple-800 mb-3">⚖️ Pesagens</h3>';
+        if (weighings && weighings.length > 0) {
+            html += '<div class="space-y-2">';
+            weighings.forEach(w => {
+                html += `
+                    <div class="bg-purple-50 p-3 rounded-lg border border-purple-200">
+                        <p class="font-medium text-gray-800">${w.peso} kg</p>
+                        <p class="text-sm text-gray-600">Data: ${formatDate(w.data_pesagem)}</p>
+                        ${w.observacao ? `<p class="text-sm text-gray-500 mt-1">Obs: ${w.observacao}</p>` : ''}
+                    </div>
+                `;
+            });
+            html += '</div>';
+        } else {
+            html += '<p class="text-gray-500 text-sm">Nenhuma pesagem registrada.</p>';
+        }
+        html += '</div>';
+
+        // Production section (only for vacas - milk production)
+        if (type === 'vacas') {
+            html += '<div>';
+            html += '<h3 class="text-lg font-semibold text-blue-800 mb-3">🥛 Produção de Leite</h3>';
+            html += '<p class="text-gray-500 text-sm">A produção de leite é registrada no módulo de Lançamento Diário.</p>';
+            html += '</div>';
+        }
+
+        contentEl.innerHTML = html;
+    } catch (error) {
+        contentEl.innerHTML = `<p class="text-red-500 text-center">Erro ao carregar histórico: ${error.message}</p>`;
+    }
+}
+
+function closeAnimalHistoryModal() {
+    const modal = document.getElementById('animal-history-modal');
     if (modal) {
         modal.classList.remove('open');
     }
@@ -1373,14 +1620,25 @@ function setupReportModule() {
     }
 
     if (generateButton) {
-        generateButton.addEventListener('click', () => {
-            const result = generateReportData();
-            if (result) {
-                currentReportData = result;
-                renderReportPreview(result);
-                if (downloadButton) {
-                    downloadButton.disabled = false;
+        generateButton.addEventListener('click', async () => {
+            generateButton.disabled = true;
+            generateButton.textContent = 'Gerando...';
+            
+            try {
+                const result = await generateReportData();
+                if (result) {
+                    currentReportData = result;
+                    renderReportPreview(result);
+                    if (downloadButton) {
+                        downloadButton.disabled = false;
+                    }
                 }
+            } catch (error) {
+                console.error('Error generating report:', error);
+                alert('Erro ao gerar relatório: ' + error.message);
+            } finally {
+                generateButton.disabled = false;
+                generateButton.textContent = 'Gerar relatório';
             }
         });
     }
@@ -1476,7 +1734,7 @@ function filterItemsByPeriod(items, dateField, start, end) {
     });
 }
 
-function generateReportData() {
+async function generateReportData() {
     const range = getReportRange();
     const report = {
         generatedAt: new Date(),
@@ -1519,19 +1777,66 @@ function generateReportData() {
         report.animals.raças[key] = (report.animals.raças[key] || 0) + 1;
     });
 
-    report.weights.lastWeights = vacasData.map(item => ({
-        id: item.id,
-        name: item.brinco || 'Vaca',
-        lastWeight: item.peso ? `${item.peso} kg` : 'Não informado'
-    }));
-    const weights = vacasData.map(item => parseFloat(item.peso || 0)).filter(Boolean);
-    report.weights.count = weights.length;
-    report.weights.averageWeight = weights.length ? (weights.reduce((sum, v) => sum + v, 0) / weights.length).toFixed(1) : 0;
-    report.weights.records = report.weights.lastWeights;
+    // Fetch vaccines from Supabase
+    try {
+        const { data: vaccines, error: vaccinesError } = await _supabase
+            .from('vacinas')
+            .select('*')
+            .eq('user_id', currentUser.id);
+        
+        if (!vaccinesError && vaccines) {
+            const vaccinesInRange = filterItemsByPeriod(vaccines, 'data_aplicacao', range.start, range.end);
+            report.vaccines.records = vaccinesInRange;
+            report.vaccines.distinctAnimals = new Set(vaccines.map(v => v.animal_id)).size;
+            
+            const today = new Date();
+            report.vaccines.upcoming = vaccines.filter(v => v.proxima_dose && new Date(v.proxima_dose) >= today).length;
+        }
+    } catch (error) {
+        console.error('Error fetching vaccines:', error);
+    }
 
-    report.vaccines.records = []; // No vaccine table available in current schema
-    report.vaccines.distinctAnimals = 0;
-    report.vaccines.upcoming = 0;
+    // Fetch weighings from Supabase
+    try {
+        const { data: weighings, error: weighingsError } = await _supabase
+            .from('pesagens')
+            .select('*')
+            .eq('user_id', currentUser.id);
+        
+        if (!weighingsError && weighings) {
+            const weighingsInRange = filterItemsByPeriod(weighings, 'data_pesagem', range.start, range.end);
+            report.weights.records = weighingsInRange;
+            report.weights.count = weighingsInRange.length;
+            
+            // Calculate average weight for vacas
+            const vacasWeighings = weighings.filter(w => w.animal_tipo === 'vacas');
+            if (vacasWeighings.length > 0) {
+                const totalWeight = vacasWeighings.reduce((sum, w) => sum + parseFloat(w.peso), 0);
+                report.weights.averageWeight = (totalWeight / vacasWeighings.length).toFixed(1);
+            }
+            
+            // Get last weight for each animal
+            const lastWeightsMap = new Map();
+            weighings.forEach(w => {
+                const key = `${w.animal_tipo}-${w.animal_id}`;
+                if (!lastWeightsMap.has(key) || new Date(w.data_pesagem) > new Date(lastWeightsMap.get(key).data_pesagem)) {
+                    lastWeightsMap.set(key, w);
+                }
+            });
+            
+            report.weights.lastWeights = Array.from(lastWeightsMap.values()).map(w => {
+                const animal = getAnimalById(w.animal_tipo, w.animal_id);
+                const name = animal ? (w.animal_tipo === 'cavalos' ? animal.nome : animal.brinco) : 'Animal';
+                return {
+                    id: w.animal_id,
+                    name: name,
+                    lastWeight: `${w.peso} kg`
+                };
+            });
+        }
+    } catch (error) {
+        console.error('Error fetching weighings:', error);
+    }
 
     const historyItems = [];
     productionRecords.forEach(item => {
@@ -1540,6 +1845,23 @@ function generateReportData() {
             message: `Produção registrada: ${item.leite || 0}L, ${item.ovos || 0} ovos, ${item.la || 0}kg de lã.`
         });
     });
+    
+    // Add vaccine records to history
+    report.vaccines.records.forEach(v => {
+        historyItems.push({
+            date: new Date(v.data_aplicacao),
+            message: `Vacina aplicada: ${v.nome_vacina}`
+        });
+    });
+    
+    // Add weighing records to history
+    report.weights.records.forEach(w => {
+        historyItems.push({
+            date: new Date(w.data_pesagem),
+            message: `Pesagem registrada: ${w.peso} kg`
+        });
+    });
+    
     animalEntries.forEach(item => {
         const date = item.created_at ? new Date(item.created_at) : new Date(item.data_entrada || item.nascimento || null);
         if (!(date instanceof Date) || isNaN(date)) return;

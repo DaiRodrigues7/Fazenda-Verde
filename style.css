@@ -108,23 +108,7 @@ tbody tr:hover {
     background: #15803d;
 }
 
-/* Responsive sidebar */
-@media (max-width: 768px) {
-    aside {
-        position: fixed;
-        left: -100%;
-        transition: left 0.3s ease;
-        z-index: 1000;
-    }
-
-    aside.open {
-        left: 0;
-    }
-
-    main {
-        margin-left: 0 !important;
-    }
-}
+/* Responsive sidebar - removed conflicting CSS to allow Tailwind classes to work */
 
 /* Delete button styles */
 .btn-delete {
@@ -217,19 +201,19 @@ button, .btn-delete {
 
 /* Mobile card view for table-based sections */
 .mobile-card-view {
-    display: block;
+    display: block !important;
 }
 
 .desktop-table-view {
-    display: none;
+    display: none !important;
 }
 
 @media (min-width: 768px) {
     .mobile-card-view {
-        display: none;
+        display: none !important;
     }
     .desktop-table-view {
-        display: block;
+        display: block !important;
     }
 }
 
@@ -344,4 +328,13 @@ button, .btn-delete {
 
 #profile-message {
     min-height: 44px;
+    position: relative;
+    z-index: 1;
+}
+
+@media (max-width: 768px) {
+    #profile-message {
+        min-height: auto;
+        margin-top: 1rem;
+    }
 }

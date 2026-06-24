@@ -546,8 +546,19 @@
             <button type="button" class="modal-close" aria-label="Fechar modal" onclick="closeAnimalActionModal()">×</button>
             <h2 id="animal-action-modal-title" class="modal-title">Ação do animal</h2>
             <div id="animal-action-modal-content" class="space-y-4"></div>
-            <div class="mt-4 flex justify-end gap-3">
+            <div id="animal-action-modal-actions" class="mt-4 flex justify-end gap-3">
                 <button type="button" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300" onclick="closeAnimalActionModal()">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="animal-history-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="animal-history-modal-title">
+        <div class="modal-panel relative">
+            <button type="button" class="modal-close" aria-label="Fechar modal" onclick="closeAnimalHistoryModal()">×</button>
+            <h2 id="animal-history-modal-title" class="modal-title">Histórico do animal</h2>
+            <div id="animal-history-modal-content" class="space-y-4 max-h-96 overflow-y-auto"></div>
+            <div class="mt-4 flex justify-end gap-3">
+                <button type="button" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300" onclick="closeAnimalHistoryModal()">Fechar</button>
             </div>
         </div>
     </div>
