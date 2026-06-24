@@ -179,7 +179,6 @@ const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Variável global para armazenar os dados do usuário conectado
 let currentUser = null;
-let profileAvatarBase64 = null;
 let currentActionPopup = null;
 let currentEditContext = null;
 let currentReportData = null;
@@ -323,7 +322,6 @@ function loadProfileForm() {
 
     const avatarFallback = avatarUrl || fullName.charAt(0).toUpperCase();
     setProfileAvatarPreview(avatarFallback);
-    profileAvatarBase64 = avatarUrl && avatarUrl.startsWith('data:') ? avatarUrl : null;
 }
 
 function setProfileAvatarPreview(value) {
@@ -350,10 +348,18 @@ function setProfileAvatarPreview(value) {
         return;
     }
 
-    profileAvatarPreview.style.backgroundImage = `url(${value})`;
-    profileAvatarPreview.style.backgroundSize = 'cover';
-    profileAvatarPreview.style.backgroundPosition = 'center';
-    profileAvatarPreview.textContent = '';
+    // Handle HTTP/HTTPS URLs (Supabase Storage)
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+        profileAvatarPreview.style.backgroundImage = `url(${value})`;
+        profileAvatarPreview.style.backgroundSize = 'cover';
+        profileAvatarPreview.style.backgroundPosition = 'center';
+        profileAvatarPreview.textContent = '';
+        return;
+    }
+
+    // Fallback to initial
+    profileAvatarPreview.style.backgroundImage = 'none';
+    profileAvatarPreview.textContent = value.charAt(0).toUpperCase();
 }
 
 function showProfileMessage(message, type) {
@@ -434,8 +440,7 @@ async function salvarPerfil(e) {
             data: {
                 first_name: firstName,
                 last_name: lastName,
-                phone: phone,
-                avatar_url: profileAvatarBase64 || ''
+                phone: phone
             }
         };
 
@@ -694,24 +699,133 @@ function configurarFormulariosSistema() {
                     const file = e.target.files[0];
                     if (!file) return;
 
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        const base64String = event.target.result;
-                        if (base64String.length > 100000) {
-                            showProfileMessage('A imagem é muito grande. Escolha um arquivo menor (máx 100kb).', 'error');
-                            return;
-                        }
-                        profileAvatarBase64 = base64String;
-                        if (profileAvatarPreview) {
-                            profileAvatarPreview.style.backgroundImage = `url(${base64String})`;
-                            profileAvatarPreview.style.backgroundSize = 'cover';
-                            profileAvatarPreview.style.backgroundPosition = 'center';
-                            profileAvatarPreview.textContent = '';
-                        }
-                    };
-                    reader.readAsDataURL(file);
+                    // Validate file size (5MB limit)
+                    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+                    if (file.size > maxSize) {
+                        showProfileMessage('A imagem é muito grande. Escolha um arquivo menor (máx 5MB).', 'error');
+                        profileAvatarInput.value = '';
+                        return;
+                    }
+
+                    // Validate file format
+                    const validFormats = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+                    if (!validFormats.includes(file.type)) {
+                        showProfileMessage('Formato inválido. Aceite apenas JPG, JPEG, PNG ou WebP.', 'error');
+                        profileAvatarInput.value = '';
+                        return;
+                    }
+
+                    // Process and compress image
+                    processAndUploadAvatar(file, profileAvatarPreview);
                 });
             }
+        }
+    }
+}
+
+// Process and compress image, then upload to Supabase Storage
+async function processAndUploadAvatar(file, previewElement) {
+    try {
+        showProfileMessage('Processando imagem...', 'success');
+        
+        // Read the file
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            const img = new Image();
+            img.onload = async () => {
+                // Calculate dimensions (max 400x400 for profile photo)
+                const maxSize = 400;
+                let width = img.width;
+                let height = img.height;
+                
+                if (width > height) {
+                    if (width > maxSize) {
+                        height *= maxSize / width;
+                        width = maxSize;
+                    }
+                } else {
+                    if (height > maxSize) {
+                        width *= maxSize / height;
+                        height = maxSize;
+                    }
+                }
+                
+                // Create canvas for resizing
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // Compress to WebP with quality 0.85 (good balance of quality/size)
+                const compressedDataUrl = canvas.toDataURL('image/webp', 0.85);
+                
+                // Convert to blob for upload
+                const response = await fetch(compressedDataUrl);
+                const blob = await response.blob();
+                const compressedFile = new File([blob], 'avatar.webp', { type: 'image/webp' });
+                
+                // Upload to Supabase Storage
+                await uploadAvatarToSupabase(compressedFile, previewElement);
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    } catch (error) {
+        showProfileMessage('Erro ao processar imagem: ' + error.message, 'error');
+    }
+}
+
+// Upload avatar to Supabase Storage
+async function uploadAvatarToSupabase(file, previewElement) {
+    try {
+        if (!currentUser || !currentUser.id) {
+            throw new Error('Usuário não autenticado');
+        }
+        
+        const fileName = `${currentUser.id}_avatar.webp`;
+        const filePath = `avatars/${fileName}`;
+        
+        // Upload to Supabase Storage (bucket 'avatars' needs to be created)
+        const { data, error } = await _supabase.storage
+            .from('avatars')
+            .upload(filePath, file, {
+                upsert: true,
+                contentType: 'image/webp'
+            });
+        
+        if (error) throw error;
+        
+        // Get public URL
+        const { data: { publicUrl } } = _supabase.storage
+            .from('avatars')
+            .getPublicUrl(filePath);
+        
+        // Store the URL in user metadata
+        const { error: updateError } = await _supabase.auth.updateUser({
+            data: { avatar_url: publicUrl }
+        });
+        
+        if (updateError) throw updateError;
+        
+        // Update preview
+        if (previewElement) {
+            previewElement.style.backgroundImage = `url(${publicUrl})`;
+            previewElement.style.backgroundSize = 'cover';
+            previewElement.style.backgroundPosition = 'center';
+            previewElement.textContent = '';
+        }
+        
+        // Update current user
+        currentUser.user_metadata.avatar_url = publicUrl;
+        
+        showProfileMessage('Foto atualizada com sucesso!', 'success');
+    } catch (error) {
+        console.error('Upload error:', error);
+        if (error.message.includes('Bucket not found') || error.message.includes('The resource was not found')) {
+            showProfileMessage('Erro: Bucket "avatars" não encontrado no Supabase Storage. Crie o bucket primeiro.', 'error');
+        } else {
+            showProfileMessage('Erro ao fazer upload: ' + error.message, 'error');
         }
     }
 

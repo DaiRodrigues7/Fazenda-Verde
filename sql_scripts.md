@@ -119,6 +119,43 @@ USING (auth.uid() = user_id);
 
 ---
 
+## Storage Bucket: avatars
+
+### Criar bucket no Supabase Storage
+
+O bucket "avatars" precisa ser criado manualmente através do painel do Supabase, pois Storage não usa SQL.
+
+**Passos para criar o bucket:**
+
+1. Acesse o painel do Supabase: https://supabase.com/dashboard
+2. Selecione o projeto "Fazenda Verde"
+3. No menu lateral, clique em "Storage"
+4. Clique em "New bucket"
+5. Nome do bucket: `avatars`
+6. Marque "Public bucket" (para permitir acesso público às imagens)
+7. Clique em "Create bucket"
+
+### Configurar políticas do bucket (RLS)
+
+Após criar o bucket, configure as políticas de acesso:
+
+1. No bucket "avatars", clique na aba "Policies"
+2. Clique em "New Policy" → "Get started"
+3. Selecione "Full custom" → "Use this template"
+4. Para leitura pública (qualquer pessoa pode ver as fotos):
+   - Nome: `Public read access`
+   - Operação: `SELECT`
+   - Usando: `(true)`
+   - Clique em "Save"
+
+5. Para upload restrito ao usuário autenticado:
+   - Nome: `Authenticated upload`
+   - Operação: `INSERT`
+   - Usando: `(auth.uid() = user_id)` ou `(auth.role() = 'authenticated')`
+   - Clique em "Save"
+
+---
+
 ## Como executar os scripts
 
 1. Acesse o painel do Supabase: https://supabase.com/dashboard
